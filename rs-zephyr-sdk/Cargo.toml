@@ -6,7 +6,7 @@ description = "Rust SDK for building Zephyr programs."
 documentation = "https://docs.mercurydata.app/"
 homepage = "https://mercurydata.app/zephyr-vm/"
 keywords = ["wasm", "sdk", "blockchain"]
-
+license = "Apache-2.0   "
 
 [dependencies]
 wee_alloc = "0.4.5"
@@ -14,8 +14,8 @@ stellar-xdr = { version = "20.1.0", default-features = false, features=["next", 
 bincode = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "1.0.49"
-rs-zephyr-common = { version = "0.1.0", path="../rs-zephyr-common" }
-macros = { package = "zephyr-macros", version = "0.1.0", path="../macros" }
+rs-zephyr-common = { version = "0.1.0" }
+macros = { package = "zephyr-macros", version = "0.1.0" }
 serde_json = "1.0"
 
 [dependencies.soroban-sdk]
