@@ -1,6 +1,8 @@
 [package]
-name = "zephyr-mercury-cli"
+name = "mercury-cli"
 version = "0.1.0"
+description = "Mercury CLI."
+license = "Apache-2.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

@@ -1,5 +1,5 @@
 use clap::Parser;
-use zephyr_mercury_cli::{Cli, Commands, MercuryClient, ZephyrProjectParser};
+use mercury_cli::{Cli, Commands, MercuryClient, ZephyrProjectParser};
 
 const BACKEND_ENDPOINT: &str = "https://api.mercurydata.app:8443";
 const MAINNET_BACKEND_ENDPOINT: &str = "https://mainnet.mercurydata.app:8443";
