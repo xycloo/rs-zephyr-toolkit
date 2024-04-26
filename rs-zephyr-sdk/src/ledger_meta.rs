@@ -1,6 +1,9 @@
 use stellar_xdr::next::{ContractEvent, GeneralizedTransactionSet, LedgerCloseMeta, LedgerEntry, LedgerEntryChange, LedgerKey, TransactionEnvelope, TransactionMeta, TransactionPhase, TransactionResultMeta, TransactionResultResult, TxSetComponent};
 
+/// Represents all of the entry changes that happened in the
+/// ledger close.
 #[derive(Clone)]
+#[allow(missing_docs)]
 pub struct EntryChanges {
     pub state: Vec<LedgerEntry>,
     pub removed: Vec<LedgerKey>,
@@ -8,8 +11,13 @@ pub struct EntryChanges {
     pub created: Vec<LedgerEntry>,
 }
 
+/// Ledger meta reader. 
+/// 
+/// Aids developers in dealing with raw XDR structures.
+/// 
 pub struct MetaReader<'a>(&'a stellar_xdr::next::LedgerCloseMeta);
 
+#[allow(missing_docs)]
 impl<'a> MetaReader<'a> {
     pub fn new(meta: &'a LedgerCloseMeta) -> Self {
         Self(meta)
@@ -70,7 +78,7 @@ impl<'a> MetaReader<'a> {
         let mut composed = Vec::new();
         
         match &self.0 {
-            LedgerCloseMeta::V0(v0) => (), // todo
+            LedgerCloseMeta::V0(_) => (), // todo
             LedgerCloseMeta::V1(v1) => {
                 let phases = match &v1.tx_set {
                     GeneralizedTransactionSet::V1(v1) => &v1.phases,

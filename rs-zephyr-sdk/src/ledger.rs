@@ -1,8 +1,7 @@
 use rs_zephyr_common::{wrapping::WrappedMaxBytes, ContractDataEntry};
 use soroban_sdk::{Map, TryFromVal, Val};
 use stellar_xdr::next::{Limits, ScVal, WriteXdr};
-
-use crate::{read_contract_data_entry_by_contract_id_and_key, read_contract_entries_by_contract, read_contract_entries_by_contract_to_env, read_contract_instance, EnvClient, SdkError};
+use crate::{env::EnvClient, external::{read_contract_data_entry_by_contract_id_and_key, read_contract_entries_by_contract, read_contract_entries_by_contract_to_env, read_contract_instance}, SdkError};
 
 
 impl EnvClient {
@@ -15,6 +14,8 @@ impl EnvClient {
         bincode::deserialize::<Option<ContractDataEntry>>(slice).map_err(|_| SdkError::Conversion)
     }
     
+    /// Returns the instance object of a certain contract from
+    /// the host's ledger.
     pub fn read_contract_instance(&self, contract: [u8; 32]) -> Result<Option<ContractDataEntry>, SdkError> {
         let contract_parts = WrappedMaxBytes::array_to_max_parts::<4>(&contract);
         let (status, offset, size) = unsafe { read_contract_instance(contract_parts[0], contract_parts[1], contract_parts[2], contract_parts[3]) };
@@ -22,6 +23,8 @@ impl EnvClient {
         Self::express_and_deser_entry(status, offset, size)
     }
 
+    /// Returns the requested entry object of a certain contract 
+    /// from the host's ledger.
     pub fn read_contract_entry_by_key(&self, contract: [u8; 32], key: ScVal) -> Result<Option<ContractDataEntry>, SdkError> {
         let key_bytes = key.to_xdr(Limits::none()).unwrap();
         let (offset, size) = (key_bytes.as_ptr() as i64, key_bytes.len() as i64);
@@ -34,6 +37,8 @@ impl EnvClient {
         Self::express_and_deser_entry(status, inbound_offset, inbound_size)
     }
 
+    /// Returns all the entry objects of a certain contract 
+    /// from the host's ledger.
     pub fn read_contract_entries(&self, contract: [u8; 32]) -> Result<Vec<ContractDataEntry>, SdkError> {
         let contract_parts = WrappedMaxBytes::array_to_max_parts::<4>(&contract);
         
@@ -47,15 +52,16 @@ impl EnvClient {
         bincode::deserialize::<Vec<ContractDataEntry>>(slice).map_err(|_| SdkError::Conversion)
     }
 
+    /// Returns all the entry objects of a certain contract 
+    /// from the host's ledger. This function retuns an iteraror
+    /// over Soroban host objects, and should be used along with the
+    /// Soroban SDK.
     pub fn read_contract_entries_to_env(&self, env: &soroban_sdk::Env, contract: [u8; 32]) -> Result<Map<Val, Val>, SdkError> {
         let contract_parts = WrappedMaxBytes::array_to_max_parts::<4>(&contract);
-        
         let (status, mapobject ) = unsafe { read_contract_entries_by_contract_to_env(contract_parts[0], contract_parts[1], contract_parts[2], contract_parts[3]) };
-
         SdkError::express_from_status(status)?;
 
-        Ok(Map::try_from_val(env, &Val::from_payload(mapobject as u64)).unwrap())
-        
-        //Ok(Map::new(env))
+        let map = Map::try_from_val(env, &Val::from_payload(mapobject as u64)).unwrap();
+        Ok(map)
     }
 }
