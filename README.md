@@ -13,5 +13,9 @@ so we've decided to split our monorepo (host, common, sdk, macros) into (host, m
 This repo contains the reference implementation for the Zephyr rust SDK. The SDK is
 a client for the host functions linked in the Zephyr VM.
 
+### Documentation
+
+Documentation can be found in the [Mercury docs](https://docs.mercurydata.app/).
+
 ### Examples
 Examples can be found in the [zephyr-examples](https://github.com/xycloo/zephyr-examples/) repo.
