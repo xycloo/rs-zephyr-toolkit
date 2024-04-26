@@ -46,7 +46,7 @@ use rs_zephyr_common::ZephyrStatus;
 use thiserror::Error;
 
 pub use env::EnvClient;
-pub use database::{TableRow, TableRows};
+pub use database::{TableRow, TableRows, DatabaseInteract};
 pub use ledger_meta::MetaReader;
 pub use rs_zephyr_common::ContractDataEntry;
 pub use ledger_meta::EntryChanges;
