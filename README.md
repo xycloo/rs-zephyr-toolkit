@@ -8,3 +8,10 @@ so we've decided to split our monorepo (host, common, sdk, macros) into (host, m
 
 > Note: most of the work right now is focusing on the host-side, as a result
 > the crates in this repo are partially incomplete and still need to be polished.
+
+# Zephyr SDK
+This repo contains the reference implementation for the Zephyr rust SDK. The SDK is
+a client for the host functions linked in the Zephyr VM.
+
+### Examples
+Examples can be found in the [zephyr-examples](https://github.com/xycloo/zephyr-examples/) repo.
