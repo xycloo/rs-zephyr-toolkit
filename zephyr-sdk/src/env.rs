@@ -1,14 +1,14 @@
 use rs_zephyr_common::{http::AgnosticRequest, RelayedMessageRequest};
 use serde::Serialize;
-use stellar_xdr::next::{Limits, ReadXdr};
+use soroban_sdk::xdr::{Limits, ReadXdr, WriteXdr};
 
-use crate::{database::{Database, DatabaseInteract}, external::{conclude_host, read_ledger_meta, tx_send_message}, logger::EnvLogger, Condition, MetaReader, SdkError, TableRows};
+use crate::{database::{Database, DatabaseInteract, UpdateTable}, external::{conclude_host, read_ledger_meta, scval_to_valid_host_val, tx_send_message}, logger::EnvLogger, Condition, MetaReader, SdkError, TableRows};
 
 
 /// Zephyr's host environment client.
 #[derive(Clone)]
 pub struct EnvClient {
-    xdr: Option<stellar_xdr::next::LedgerCloseMeta>,
+    xdr: Option<soroban_sdk::xdr::LedgerCloseMeta>,
     inner_soroban_host: soroban_sdk::Env,
 }
 
@@ -22,6 +22,28 @@ impl EnvClient {
     /// Returns a soroban host stub.
     pub fn soroban(&self) -> &soroban_sdk::Env {
         &self.inner_soroban_host
+    }
+
+    /// Converts an ScVal into a soroban host object.
+    /// Returns a Soroban Val.
+    /// Panics when the conversion fails.
+    pub fn from_scval<T: soroban_sdk::TryFromVal<soroban_sdk::Env, soroban_sdk::Val>>(&self, scval: &soroban_sdk::xdr::ScVal) -> T {
+        self.scval_to_valid_host_val(scval).unwrap()
+    }
+    
+
+    /// Converts an ScVal into a soroban host object.
+    /// Returns a result with a Soroban Val.
+    pub fn scval_to_valid_host_val<T: soroban_sdk::TryFromVal<soroban_sdk::Env, soroban_sdk::Val>>(&self, scval: &soroban_sdk::xdr::ScVal) -> Result<T, SdkError> {
+        let val_bytes = scval.to_xdr(Limits::none()).unwrap();
+        let (offset, size) = (val_bytes.as_ptr() as i64, val_bytes.len() as i64);
+
+        let (status, val) = unsafe { scval_to_valid_host_val(offset, size) };
+        SdkError::express_from_status(status)?;
+
+        let val = soroban_sdk::Val::from_payload(val as u64);
+        
+        Ok(T::try_from_val(&self.soroban(), &val).unwrap())
     }
 
     pub(crate) fn message_relay(message: impl Serialize) {
@@ -67,7 +89,16 @@ impl EnvClient {
     /// This function uses the [`DatabaseInteract`] trait
     /// along with the `DatabaseDerive` macro to update the row 
     /// derived from the `DatabaseDerive` struct.
-    pub fn update<T: DatabaseInteract>(&self, row: &T, conditions: &[Condition]) {
+    pub fn update(&self) -> UpdateTable {
+        UpdateTable::new()
+    }
+
+    /// Updates a row to a database table.
+    /// 
+    /// This function uses the [`DatabaseInteract`] trait
+    /// along with the `DatabaseDerive` macro to update the row 
+    /// derived from the `DatabaseDerive` struct.
+    pub fn update_inner<T: DatabaseInteract>(&self, row: &T, conditions: &[Condition]) {
         row.update(&self, conditions)
     }
 
@@ -109,7 +140,7 @@ impl EnvClient {
                 core::slice::from_raw_parts(start, size as usize)
             };
             
-            Some(stellar_xdr::next::LedgerCloseMeta::from_xdr(slice, Limits::none()).unwrap())
+            Some(soroban_sdk::xdr::LedgerCloseMeta::from_xdr(slice, Limits::none()).unwrap())
         };
         
         Self { xdr: ledger_meta, inner_soroban_host: soroban_sdk::Env::default() }

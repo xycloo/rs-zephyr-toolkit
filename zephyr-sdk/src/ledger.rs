@@ -1,6 +1,6 @@
 use rs_zephyr_common::{wrapping::WrappedMaxBytes, ContractDataEntry};
 use soroban_sdk::{Map, TryFromVal, Val};
-use stellar_xdr::next::{Limits, ScVal, WriteXdr};
+use soroban_sdk::xdr::{Limits, ScVal, WriteXdr};
 use crate::{env::EnvClient, external::{read_contract_data_entry_by_contract_id_and_key, read_contract_entries_by_contract, read_contract_entries_by_contract_to_env, read_contract_instance}, SdkError};
 
 

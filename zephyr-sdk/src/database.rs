@@ -1,5 +1,6 @@
 use crate::{env::EnvClient, external::{env_push_stack, read_raw, update_raw, write_raw}, symbol, to_fixed, SdkError};
 use serde::{Deserialize, Serialize};
+use soroban_sdk::xdr::{Limits, WriteXdr};
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct TypeWrap(pub Vec<u8>);
@@ -160,10 +161,60 @@ impl Database {
     }
 }
 
+
+/// Simple wrapper for building conditions.
+pub struct UpdateTable {
+    conditions: Vec<Condition>
+}
+
+
+impl UpdateTable {
+    /// Creates a new table update object.
+    pub fn new() -> Self {
+        Self {
+            conditions: vec![]
+        }
+    }
+
+    /// Adds a new condition in the update according to which a given column
+    /// should be equal to an XDR object.
+    pub fn column_equal_to_xdr(&mut self, column: impl ToString, xdr: &impl WriteXdr) -> &mut Self {
+        let bytes = xdr.to_xdr(Limits::none()).unwrap();
+        let condition = Condition::ColumnEqualTo(column.to_string(), bytes);
+        self.conditions.push(condition);
+
+        self
+    }
+
+    /// Adds a new condition in the update according to which a given column
+    /// should be equal to the matching bytes array.
+    /// 
+    /// This filter should be used when dealing with non-XDR types. Serialization
+    /// must be carried by the implementor.
+    pub fn column_equal_to_bytes(&mut self, column: impl ToString, bytes: &[u8]) -> &mut Self {
+        let condition = Condition::ColumnEqualTo(column.to_string(), bytes.to_vec());
+        self.conditions.push(condition);
+
+        self
+    }
+
+
+    /// Executes the update.
+    pub fn execute(&mut self, interact: &impl DatabaseInteract) {
+        interact.update(&EnvClient::empty(), &self.conditions)
+    }
+}
+
+/// Trait that DatabaseDerive structures implement
 pub trait DatabaseInteract {
+    
+    /// Reads from the database into a vector of `Self`.
     fn read_to_rows(env: &EnvClient) -> Vec<Self> where Self: Sized;
 
+    /// Inserts a row `Self` into the database table.
     fn put(&self, env: &EnvClient);
 
+    /// Updates an existing row with `Self` into the database table
+    /// using the provided conditions as update filter.
     fn update(&self, env: &EnvClient, conditions: &[Condition]);
 }

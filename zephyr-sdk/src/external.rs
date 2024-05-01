@@ -18,6 +18,10 @@ extern "C" {
     pub fn read_contract_entries_by_contract(contract_part_1: i64, contract_part_2: i64, contract_part_3: i64, contract_part_4: i64) -> (i64, i64, i64);
 
     #[allow(improper_ctypes)]
+    #[link_name = "scval_to_valid_host_val"]
+    pub fn scval_to_valid_host_val(offset: i64, size: i64) -> (i64, i64);
+
+    #[allow(improper_ctypes)]
     #[link_name = "read_contract_entries_by_contract_to_env"]
     pub fn read_contract_entries_by_contract_to_env(contract_part_1: i64, contract_part_2: i64, contract_part_3: i64, contract_part_4: i64) -> (i64, i64);
 

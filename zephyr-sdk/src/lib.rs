@@ -42,6 +42,8 @@ mod env;
 mod external;
 mod logger;
 
+pub mod prelude;
+
 use rs_zephyr_common::ZephyrStatus;
 use thiserror::Error;
 
@@ -51,7 +53,7 @@ pub use ledger_meta::MetaReader;
 pub use rs_zephyr_common::ContractDataEntry;
 pub use ledger_meta::EntryChanges;
 pub use soroban_sdk;
-pub use stellar_xdr;
+//pub use stellar_xdr;
 pub use database::Condition;
 pub use rs_zephyr_common::{ZephyrVal, http::{AgnosticRequest, Method}};
 pub use bincode;
@@ -108,7 +110,7 @@ impl SdkError {
 /// Note that these might be deprecated in the future.
 #[allow(missing_docs)]
 pub mod utils {
-    use stellar_xdr::next::{Int128Parts, ScMapEntry, ScSymbol, ScVal, ScVec, VecM};
+    use soroban_sdk::xdr::{Int128Parts, ScMapEntry, ScSymbol, ScVal, ScVec, VecM};
 
     use crate::SdkError;
 

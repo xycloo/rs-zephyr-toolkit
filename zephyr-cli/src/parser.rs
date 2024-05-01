@@ -7,7 +7,7 @@ use crate::{error::ParserError, MercuryClient};
 
 impl Config {
     fn tables(&self) -> Vec<Table> {
-        self.tables.clone()
+        self.tables.clone().unwrap_or(vec![])
     }
 }
 
@@ -17,7 +17,7 @@ pub struct Config {
     pub name: String,
 
     /// Tables that the poject is writing or reading.
-    pub tables: Vec<Table>,
+    pub tables: Option<Vec<Table>>,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -106,7 +106,7 @@ mod test {
     pub fn sample_config() {
         let config = Config {
             name: "zephyr-soroban-op-ratio".into(),
-            tables: vec![Table {
+            tables: Some(vec![Table {
                 name: "opratio".into(),
                 columns: vec![Column {
                     name: "soroban".into(),
@@ -115,7 +115,7 @@ mod test {
                     name: "ratio".into(),
                     col_type: "BYTEA".into() // only supported type as of now 
                 }]
-            }]
+            }])
         };
 
         println!("{}", toml::to_string(&config).unwrap());

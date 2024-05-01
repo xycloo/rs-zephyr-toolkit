@@ -7,13 +7,9 @@ use syn::{self, parse_macro_input, DeriveInput, Expr, ExprLit, FieldsNamed, Iden
 
 #[proc_macro_derive(DatabaseInteract, attributes(with_name))]
 pub fn database_interact_derive(input: TokenStream) -> TokenStream {
-    // Parse the input tokens into a syntax tree
     let input = parse_macro_input!(input as DeriveInput);
-    
-    // Extract the struct name
     let struct_name = &input.ident;
     
-    // Extract the with_name attribute if it exists
     let with_name_attr = input.attrs.iter().find_map(|attr| {
         if attr.path().is_ident("with_name") {
             let value: Expr = attr.parse_args().unwrap();
@@ -130,11 +126,8 @@ pub fn database_interact_derive(input: TokenStream) -> TokenStream {
         }
     });
 
-    // Generate the implementation of the trait
+    // Actual trait implementation generation
     let expanded = quote! {
-        //use rs_zephyr_sdk::{bincode, ZephyrVal};
-        //use std::convert::TryInto;
-
         impl DatabaseInteract for #struct_name {
             fn read_to_rows(env: &EnvClient) -> Vec<Self> where Self: Sized {
                 let rows = env.db_read(&#with_name_attr, &[#(#field_literals),*]).unwrap();
@@ -162,7 +155,6 @@ pub fn database_interact_derive(input: TokenStream) -> TokenStream {
     };
 
 
-    // Return the generated implementation
     TokenStream::from(expanded)
 }
 

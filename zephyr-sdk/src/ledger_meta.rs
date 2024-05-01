@@ -1,4 +1,4 @@
-use stellar_xdr::next::{ContractEvent, GeneralizedTransactionSet, LedgerCloseMeta, LedgerEntry, LedgerEntryChange, LedgerKey, TransactionEnvelope, TransactionMeta, TransactionPhase, TransactionResultMeta, TransactionResultResult, TxSetComponent};
+use soroban_sdk::xdr::{ContractEvent, GeneralizedTransactionSet, LedgerCloseMeta, LedgerEntry, LedgerEntryChange, LedgerKey, TransactionEnvelope, TransactionMeta, TransactionPhase, TransactionResultMeta, TransactionResultResult, TxSetComponent};
 
 /// Represents all of the entry changes that happened in the
 /// ledger close.
@@ -15,7 +15,7 @@ pub struct EntryChanges {
 /// 
 /// Aids developers in dealing with raw XDR structures.
 /// 
-pub struct MetaReader<'a>(&'a stellar_xdr::next::LedgerCloseMeta);
+pub struct MetaReader<'a>(&'a soroban_sdk::xdr::LedgerCloseMeta);
 
 #[allow(missing_docs)]
 impl<'a> MetaReader<'a> {
@@ -228,7 +228,7 @@ impl<'a> MetaReader<'a> {
     pub fn soroban_events(&self) -> Vec<ContractEvent> {
         let mut events = Vec::new();
         
-        for (_, result) in self.envelopes_with_meta() {
+        for result in self.tx_processing() {
             if let TransactionMeta::V3(v3) = &result.tx_apply_processing {
                 if let Some(soroban) = &v3.soroban_meta {
                     for event in soroban.events.iter() {
