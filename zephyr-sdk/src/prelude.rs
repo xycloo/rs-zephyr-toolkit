@@ -4,4 +4,4 @@
 //! 
 
 pub use soroban_sdk::xdr::{Limits, WriteXdr, ReadXdr};
-pub use crate::{DatabaseInteract, ZephyrVal, bincode, database::UpdateTable};
+pub use crate::{DatabaseInteract, ZephyrVal, bincode, database::UpdateTable, Condition};
