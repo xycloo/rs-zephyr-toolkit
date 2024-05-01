@@ -1,3 +1,5 @@
+use std::{fs::{File, OpenOptions}, io::Write};
+
 use clap::Parser;
 use mercury_cli::{Cli, Commands, MercuryClient, ZephyrProjectParser};
 
@@ -10,12 +12,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
     let client = if let Some(true) = cli.local {
-        MercuryClient::new(LOCAL_BACKEND.to_string(), cli.jwt) 
+        MercuryClient::new(LOCAL_BACKEND.to_string(), cli.jwt.unwrap_or("".into())) 
     } else {
         if let Some(true) = cli.mainnet {
-            MercuryClient::new(MAINNET_BACKEND_ENDPOINT.to_string(), cli.jwt) 
+            MercuryClient::new(MAINNET_BACKEND_ENDPOINT.to_string(), cli.jwt.unwrap_or("".into())) 
         } else {
-            MercuryClient::new(BACKEND_ENDPOINT.to_string(), cli.jwt) 
+            MercuryClient::new(BACKEND_ENDPOINT.to_string(), cli.jwt.unwrap_or("".into())) 
         }
     };
 
@@ -38,6 +40,82 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 println!("Successfully deployed Zephyr program.");
             }
+        },
+
+        Some(Commands::NewProject { name }) => {
+            let output = std::process::Command::new("cargo")
+                .args(&["new", "--lib", &name])
+                .output()?;
+
+            if !output.status.success() {
+                println!("Failed to create new project")   
+            }
+
+            let output = std::process::Command::new("touch")
+                .args(&[&format!("{}/zephyr.toml", name)])
+                .output()?;
+
+            if !output.status.success() {
+                println!("Failed to create new project")   
+            }
+
+            let output = std::process::Command::new("mkdir")
+                .args(&[&format!("{}/.cargo", name)])
+                .output()?;
+
+            if !output.status.success() {
+                println!("Failed to create new project")   
+            }
+
+            let output = std::process::Command::new("touch")
+                .args(&[&format!("{}/.cargo/config", name)])
+                .output()?;
+
+            if !output.status.success() {
+                println!("Failed to create new project")   
+            }
+
+            let mut toml = File::create(format!("{}/zephyr.toml", name))?;
+            toml.write_all(format!(r#"name = "{}""#, name).as_bytes())?;
+            toml.flush()?;
+
+            let mut config = File::create(format!("{}/.cargo/config", name))?;
+            config.write_all(r#"[target.wasm32-unknown-unknown]
+rustflags = [
+    "-C", "target-feature=+multivalue",
+    "-C", "link-args=-z stack-size=10000000",
+]
+            "#.as_bytes())?;
+            config.flush()?;
+
+            let starter = r#"use zephyr_sdk::{prelude::*, EnvClient};
+
+#[no_mangle]
+pub extern "C" fn on_close() {
+    let env = EnvClient::new();
+}            
+"#.as_bytes();
+
+            let mut lib = File::create(format!("{}/src/lib.rs", name))?;
+            lib.write_all(starter)?;
+            lib.flush()?;
+
+            let mut cargo_toml = OpenOptions::new().append(true).open(format!("{}/Cargo.toml", name))?;
+            cargo_toml.write(r#"zephyr-sdk = { version = "0.1.1" }
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+debug = 0
+strip = "symbols"
+debug-assertions = false
+panic = "abort"
+codegen-units = 1
+lto = true
+"#.as_bytes())?;
         },
 
         None => {

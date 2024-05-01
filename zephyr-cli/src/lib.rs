@@ -14,7 +14,7 @@ pub use parser::ZephyrProjectParser;
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
     #[arg(short, long)]
-    pub jwt: String,
+    pub jwt: Option<String>,
 
     #[arg(short, long)]
     pub local: Option<bool>,
@@ -38,6 +38,11 @@ pub enum Commands {
         #[arg(short, long)]
         force: Option<bool>,
     },
+
+    NewProject {
+        #[arg(short, long)]
+        name: String,
+    }
 }
 
 #[derive(Deserialize, Serialize, Debug)]
