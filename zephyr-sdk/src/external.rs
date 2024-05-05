@@ -54,4 +54,8 @@ extern "C" {
 
     #[link_name = "zephyr_logger"]
     pub fn log(param: i64);
+
+    #[allow(improper_ctypes)]
+    #[link_name = "valid_host_val_to_scval"]
+    pub fn valid_host_val_to_scval(val: i64) -> (i64, i64, i64);
 }

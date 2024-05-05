@@ -45,12 +45,22 @@ mod logger;
 pub mod prelude;
 
 use rs_zephyr_common::ZephyrStatus;
+use serde::Deserialize;
+use serde::Serialize;
+use soroban_sdk::xdr::LedgerEntry;
+use soroban_sdk::xdr::Limits;
+use soroban_sdk::xdr::ReadXdr;
+use soroban_sdk::xdr::ScAddress;
+use soroban_sdk::xdr::ScVal;
+//use soroban_sdk::xdr::WriteXdr;
+use stellar_xdr::next::{WriteXdr};
 use thiserror::Error;
 
+pub use logger::EnvLogger;
 pub use env::EnvClient;
 pub use database::{TableRow, TableRows, DatabaseInteract};
 pub use ledger_meta::MetaReader;
-pub use rs_zephyr_common::ContractDataEntry;
+//pub use rs_zephyr_common::ContractDataEntry;
 pub use ledger_meta::EntryChanges;
 pub use soroban_sdk;
 //pub use stellar_xdr;
@@ -145,5 +155,38 @@ pub mod utils {
     pub fn to_array<T, const N: usize>(v: Vec<T>) -> [T; N] {
         v.try_into()
             .unwrap_or_else(|v: Vec<T>| panic!("Expected a Vec of length {} but it was {}", N, v.len()))
+    }
+}
+
+#[allow(missing_docs)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ContractDataEntryStellarXDR {
+    pub contract_id: stellar_xdr::next::ScAddress,
+    pub key: stellar_xdr::next::ScVal,
+    pub entry: stellar_xdr::next::LedgerEntry,
+    pub durability: i32,
+    pub last_modified: i32
+}
+
+
+#[allow(missing_docs)]
+#[derive(Debug, Clone)]
+pub struct ContractDataEntry {
+    pub contract_id: ScAddress,
+    pub key: ScVal,
+    pub entry: LedgerEntry,
+    pub durability: i32,
+    pub last_modified: i32
+}
+
+impl Into<ContractDataEntry> for ContractDataEntryStellarXDR {
+    fn into(self) -> ContractDataEntry {
+        ContractDataEntry {
+            contract_id: ScAddress::from_xdr(self.contract_id.to_xdr(stellar_xdr::next::Limits::none()).unwrap(), Limits::none()).unwrap(),
+            key: ScVal::from_xdr(self.key.to_xdr(stellar_xdr::next::Limits::none()).unwrap(), Limits::none()).unwrap(),
+            entry: LedgerEntry::from_xdr(self.entry.to_xdr(stellar_xdr::next::Limits::none()).unwrap(), Limits::none()).unwrap(),
+            durability: self.durability,
+            last_modified: self.last_modified
+        }
     }
 }

@@ -1,8 +1,10 @@
+use std::fmt::Debug;
+
 use rs_zephyr_common::{http::AgnosticRequest, RelayedMessageRequest};
 use serde::Serialize;
 use soroban_sdk::xdr::{Limits, ReadXdr, WriteXdr};
 
-use crate::{database::{Database, DatabaseInteract, UpdateTable}, external::{conclude_host, read_ledger_meta, scval_to_valid_host_val, tx_send_message}, logger::EnvLogger, Condition, MetaReader, SdkError, TableRows};
+use crate::{database::{Database, DatabaseInteract, UpdateTable}, external::{self, conclude_host, read_ledger_meta, scval_to_valid_host_val, tx_send_message}, logger::EnvLogger, Condition, MetaReader, SdkError, TableRows};
 
 
 /// Zephyr's host environment client.
@@ -27,20 +29,43 @@ impl EnvClient {
     /// Converts an ScVal into a soroban host object.
     /// Returns a Soroban Val.
     /// Panics when the conversion fails.
-    pub fn from_scval<T: soroban_sdk::TryFromVal<soroban_sdk::Env, soroban_sdk::Val>>(&self, scval: &soroban_sdk::xdr::ScVal) -> T {
+    pub fn from_scval<T: Debug + soroban_sdk::TryFromVal<soroban_sdk::Env, soroban_sdk::Val>>(&self, scval: &soroban_sdk::xdr::ScVal) -> T {
         self.scval_to_valid_host_val(scval).unwrap()
+    }
+
+    pub fn to_scval<T: soroban_sdk::TryIntoVal<soroban_sdk::Env, soroban_sdk::Val>>(&self, val: T) -> soroban_sdk::xdr::ScVal {
+        let val: soroban_sdk::Val = val.try_into_val(self.soroban()).unwrap();
+        let val_payload = val.get_payload() as i64;
+
+        let (status, offset, size) = unsafe {
+            external::valid_host_val_to_scval(val_payload)
+        };
+        
+        SdkError::express_from_status(status).unwrap();
+        let xdr = {
+            let memory: *const u8 = offset as *const u8;
+
+            let slice = unsafe {
+                core::slice::from_raw_parts(memory, size as usize)
+            };
+
+            soroban_sdk::xdr::ScVal::from_xdr(slice, Limits::none()).unwrap()
+        };
+
+        xdr
     }
     
 
     /// Converts an ScVal into a soroban host object.
     /// Returns a result with a Soroban Val.
-    pub fn scval_to_valid_host_val<T: soroban_sdk::TryFromVal<soroban_sdk::Env, soroban_sdk::Val>>(&self, scval: &soroban_sdk::xdr::ScVal) -> Result<T, SdkError> {
+    pub fn scval_to_valid_host_val<T: Debug + soroban_sdk::TryFromVal<soroban_sdk::Env, soroban_sdk::Val>>(&self, scval: &soroban_sdk::xdr::ScVal) -> Result<T, SdkError> {
         let val_bytes = scval.to_xdr(Limits::none()).unwrap();
         let (offset, size) = (val_bytes.as_ptr() as i64, val_bytes.len() as i64);
 
         let (status, val) = unsafe { scval_to_valid_host_val(offset, size) };
         SdkError::express_from_status(status)?;
 
+        
         let val = soroban_sdk::Val::from_payload(val as u64);
         
         Ok(T::try_from_val(&self.soroban(), &val).unwrap())
