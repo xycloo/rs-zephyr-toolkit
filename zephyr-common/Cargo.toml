@@ -3,6 +3,7 @@ name = "rs-zephyr-common"
 version = "0.1.2"
 edition = "2021"
 description = "Common structures between the zephyr sdk and vm"
+repository = "https://github.com/szabgab/rs-zephyr-toolkit"
 license = "Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
