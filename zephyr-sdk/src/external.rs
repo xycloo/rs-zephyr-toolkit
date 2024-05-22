@@ -6,6 +6,10 @@
 #[allow(dead_code)]
 extern "C" {
     #[allow(improper_ctypes)]
+    #[link_name = "soroban_simulate_tx"]
+    pub fn soroban_simulate_tx(account_part_1: i64, account_part_2: i64, account_part_3: i64, account_part_4: i64, offset: i64, size: i64) -> (i64, i64, i64);
+    
+    #[allow(improper_ctypes)]
     #[link_name = "read_contract_data_entry_by_contract_id_and_key"]
     pub fn read_contract_data_entry_by_contract_id_and_key(contract_part_1: i64, contract_part_2: i64, contract_part_3: i64, contract_part_4: i64, offset: i64, size: i64) -> (i64, i64, i64);
 

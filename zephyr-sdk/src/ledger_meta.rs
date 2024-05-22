@@ -1,4 +1,4 @@
-use soroban_sdk::xdr::{ContractEvent, GeneralizedTransactionSet, LedgerCloseMeta, LedgerEntry, LedgerEntryChange, LedgerKey, TransactionEnvelope, TransactionMeta, TransactionPhase, TransactionResultMeta, TransactionResultResult, TxSetComponent};
+use soroban_sdk::xdr::{ContractEvent, ContractEventBody, GeneralizedTransactionSet, LedgerCloseMeta, LedgerEntry, LedgerEntryChange, LedgerKey, ReadXdr, ScVal, TransactionEnvelope, TransactionMeta, TransactionPhase, TransactionResultMeta, TransactionResultResult, TxSetComponent, VecM};
 
 /// Represents all of the entry changes that happened in the
 /// ledger close.
@@ -233,6 +233,52 @@ impl<'a> MetaReader<'a> {
                 if let Some(soroban) = &v3.soroban_meta {
                     for event in soroban.events.iter() {
                         events.push(event.clone())
+                    }
+                }
+            }
+        }
+
+        events
+    }
+
+    pub fn pretty(&self) -> PrettyMetaReader {
+        PrettyMetaReader { inner: self }
+    }
+}
+
+
+pub struct PrettyContractEvent {
+    pub raw: ContractEvent,
+    pub contract: [u8; 32],
+    pub topics: VecM<ScVal>,
+    pub data: ScVal
+}
+
+impl From<ContractEvent> for PrettyContractEvent {
+    fn from(value: ContractEvent) -> Self {
+        let ContractEventBody::V0(event) = &value.body;
+
+        Self {
+            contract: value.contract_id.as_ref().unwrap().0,
+            topics: event.topics.clone(),
+            data: event.data.clone(),
+            raw: value
+        }
+    }
+}
+pub struct PrettyMetaReader<'a> {
+    inner: &'a MetaReader<'a>,
+}
+
+impl<'a> PrettyMetaReader<'a> {
+    pub fn soroban_events(&self) -> Vec<PrettyContractEvent> {
+        let mut events = Vec::new();
+        
+        for result in self.inner.tx_processing() {
+            if let TransactionMeta::V3(v3) = &result.tx_apply_processing {
+                if let Some(soroban) = &v3.soroban_meta {
+                    for event in soroban.events.iter() {
+                        events.push(event.clone().into())
                     }
                 }
             }
