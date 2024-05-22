@@ -3,8 +3,8 @@ use std::{fs::{File, OpenOptions}, io::Write};
 use clap::Parser;
 use mercury_cli::{Cli, Commands, MercuryClient, ZephyrProjectParser};
 
-const BACKEND_ENDPOINT: &str = "https://api.mercurydata.app:8443";
-const MAINNET_BACKEND_ENDPOINT: &str = "https://mainnet.mercurydata.app:8443";
+const BACKEND_ENDPOINT: &str = "https://api.mercurydata.app";
+const MAINNET_BACKEND_ENDPOINT: &str = "https://mainnet.mercurydata.app";
 const LOCAL_BACKEND: &str = "http://127.0.0.1:8443";
 
 #[tokio::main]
@@ -41,6 +41,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Successfully deployed Zephyr program.");
             }
         },
+
+        Some(Commands::Catchup { contracts }) => {
+            if client.catchup(contracts).await.is_err() {
+                println!("Catchup request failed client-side.")
+            }
+        }
 
         Some(Commands::NewProject { name }) => {
             let output = std::process::Command::new("cargo")

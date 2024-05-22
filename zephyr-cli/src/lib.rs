@@ -39,6 +39,11 @@ pub enum Commands {
         force: Option<bool>,
     },
 
+    Catchup {
+        #[arg(short, long)]
+        contracts: Vec<String>
+    },
+
     NewProject {
         #[arg(short, long)]
         name: String,
@@ -152,5 +157,52 @@ impl MercuryClient {
 
         Ok(())
     }
+
+    pub async fn catchup(&self, contracts: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
+        let mode = CatchupRequest { mode: ExecutionMode::EventCatchup(contracts) };
+        let json_code = serde_json::to_string(&mode)?;
+
+        let url = format!("{}/zephyr/execute", &self.base_url);
+        let authorization = format!("Bearer {}", &self.jwt);
+
+        let client = reqwest::Client::new();
+
+        let response = client
+            .post(url)
+            .header("Content-Type", "application/json")
+            .header("Authorization", authorization)
+            .body(json_code)
+            .send()
+            .await
+            .unwrap();
+
+        if response.status().is_success() {
+            println!("Catchup request sent successfully: {}", response.text().await.unwrap())
+        } else {
+            println!(
+                "[-] Request failed with status code: {:?}, {}",
+                response.status(), response.text().await.unwrap()
+            );
+        };
+
+        Ok(())
+    }
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct InvokeZephyrFunction {
+    fname: String,
+    arguments: String
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum ExecutionMode {
+    EventCatchup(Vec<String>),
+    Function(InvokeZephyrFunction)
+}
+
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct CatchupRequest {
+    mode: ExecutionMode
+}
