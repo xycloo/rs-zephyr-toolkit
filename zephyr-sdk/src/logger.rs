@@ -1,4 +1,7 @@
-use rs_zephyr_common::{log::{LogLevel, ZephyrLog}, RelayedMessageRequest};
+use rs_zephyr_common::{
+    log::{LogLevel, ZephyrLog},
+    RelayedMessageRequest,
+};
 
 use crate::env::EnvClient;
 
@@ -9,7 +12,7 @@ impl EnvLogger {
         let log = ZephyrLog {
             level: LogLevel::Error,
             message: message.to_string(),
-            data
+            data,
         };
 
         EnvClient::message_relay(RelayedMessageRequest::Log(log));
@@ -19,7 +22,7 @@ impl EnvLogger {
         let log = ZephyrLog {
             level: LogLevel::Debug,
             message: message.to_string(),
-            data
+            data,
         };
 
         EnvClient::message_relay(RelayedMessageRequest::Log(log));
@@ -29,7 +32,7 @@ impl EnvLogger {
         let log = ZephyrLog {
             level: LogLevel::Warning,
             message: message.to_string(),
-            data
+            data,
         };
 
         EnvClient::message_relay(RelayedMessageRequest::Log(log));

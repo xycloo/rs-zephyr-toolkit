@@ -1,19 +1,19 @@
 //! Zephyr Rust SDK
-//! 
+//!
 //! The zephyr rust sdk aids developers in writing programs for the
 //! Zephyr Virtual Machine.
-//! 
+//!
 //! ## Hello Ledger Example
-//! 
+//!
 //! ```
 //! use rs_zephyr_sdk::{bincode, log, stellar_xdr::next::{Limits, WriteXdr}, Condition, DatabaseDerive, DatabaseInteract, EnvClient, ZephyrVal};
-//! 
+//!
 //! #[derive(DatabaseDerive, Clone)]
 //! #[with_name("curr_seq")]
 //! struct Sequence {
 //!     pub current: u32,
 //! }
-//! 
+//!
 //! #[no_mangle]
 //! pub extern "C" fn on_close() {
 //!    let env = EnvClient::new();
@@ -30,17 +30,17 @@
 //!    }
 //! }
 //! ```
-//! 
+//!
 
 #![warn(missing_docs)]
 
 mod database;
-mod ledger_meta;
-mod symbol;
-mod ledger;
 mod env;
 mod external;
+mod ledger;
+mod ledger_meta;
 mod logger;
+mod symbol;
 
 pub mod prelude;
 
@@ -52,22 +52,26 @@ use soroban_sdk::xdr::Limits;
 use soroban_sdk::xdr::ReadXdr;
 use soroban_sdk::xdr::ScAddress;
 use soroban_sdk::xdr::ScVal;
+use soroban_sdk::xdr::Transaction;
 //use soroban_sdk::xdr::WriteXdr;
-use stellar_xdr::next::{WriteXdr};
+use stellar_xdr::next::WriteXdr;
 use thiserror::Error;
 
-pub use logger::EnvLogger;
+pub use database::{DatabaseInteract, TableRow, TableRows};
 pub use env::EnvClient;
-pub use database::{TableRow, TableRows, DatabaseInteract};
 pub use ledger_meta::MetaReader;
+pub use logger::EnvLogger;
 //pub use rs_zephyr_common::ContractDataEntry;
 pub use ledger_meta::EntryChanges;
 pub use soroban_sdk;
 //pub use stellar_xdr;
-pub use database::Condition;
-pub use rs_zephyr_common::{ZephyrVal, http::{AgnosticRequest, Method}};
 pub use bincode;
+pub use database::Condition;
 pub use macros::DatabaseInteract as DatabaseDerive;
+pub use rs_zephyr_common::{
+    http::{AgnosticRequest, Method},
+    ZephyrVal,
+};
 
 fn to_fixed<T, const N: usize>(v: Vec<T>) -> [T; N] {
     v.try_into()
@@ -99,7 +103,7 @@ pub enum SdkError {
     HostConfiguration,
 
     #[error("Unknown error.")]
-    Unknown
+    Unknown,
 }
 
 impl SdkError {
@@ -110,11 +114,10 @@ impl SdkError {
             ZephyrStatus::DbWriteError => Err(SdkError::DbWrite),
             ZephyrStatus::NoValOnStack => Err(SdkError::NoValOnStack),
             ZephyrStatus::HostConfiguration => Err(SdkError::HostConfiguration),
-            ZephyrStatus::Unknown => Err(SdkError::Unknown)
+            ZephyrStatus::Unknown => Err(SdkError::Unknown),
         }
     }
 }
-
 
 /// Some sparse scval utils.
 /// Note that these might be deprecated in the future.
@@ -145,7 +148,9 @@ pub mod utils {
     }
 
     pub fn to_scval_symbol(from: &str) -> Result<ScVal, SdkError> {
-        Ok(ScVal::Symbol(ScSymbol(from.try_into().map_err(|_| SdkError::Conversion)?)))
+        Ok(ScVal::Symbol(ScSymbol(
+            from.try_into().map_err(|_| SdkError::Conversion)?,
+        )))
     }
 
     pub fn parts_to_i128(parts: &Int128Parts) -> i128 {
@@ -153,8 +158,9 @@ pub mod utils {
     }
 
     pub fn to_array<T, const N: usize>(v: Vec<T>) -> [T; N] {
-        v.try_into()
-            .unwrap_or_else(|v: Vec<T>| panic!("Expected a Vec of length {} but it was {}", N, v.len()))
+        v.try_into().unwrap_or_else(|v: Vec<T>| {
+            panic!("Expected a Vec of length {} but it was {}", N, v.len())
+        })
     }
 }
 
@@ -165,9 +171,8 @@ pub struct ContractDataEntryStellarXDR {
     pub key: stellar_xdr::next::ScVal,
     pub entry: stellar_xdr::next::LedgerEntry,
     pub durability: i32,
-    pub last_modified: i32
+    pub last_modified: i32,
 }
-
 
 #[allow(missing_docs)]
 #[derive(Debug, Clone)]
@@ -176,17 +181,33 @@ pub struct ContractDataEntry {
     pub key: ScVal,
     pub entry: LedgerEntry,
     pub durability: i32,
-    pub last_modified: i32
+    pub last_modified: i32,
 }
 
 impl Into<ContractDataEntry> for ContractDataEntryStellarXDR {
     fn into(self) -> ContractDataEntry {
         ContractDataEntry {
-            contract_id: ScAddress::from_xdr(self.contract_id.to_xdr(stellar_xdr::next::Limits::none()).unwrap(), Limits::none()).unwrap(),
-            key: ScVal::from_xdr(self.key.to_xdr(stellar_xdr::next::Limits::none()).unwrap(), Limits::none()).unwrap(),
-            entry: LedgerEntry::from_xdr(self.entry.to_xdr(stellar_xdr::next::Limits::none()).unwrap(), Limits::none()).unwrap(),
+            contract_id: ScAddress::from_xdr(
+                self.contract_id
+                    .to_xdr(stellar_xdr::next::Limits::none())
+                    .unwrap(),
+                Limits::none(),
+            )
+            .unwrap(),
+            key: ScVal::from_xdr(
+                self.key.to_xdr(stellar_xdr::next::Limits::none()).unwrap(),
+                Limits::none(),
+            )
+            .unwrap(),
+            entry: LedgerEntry::from_xdr(
+                self.entry
+                    .to_xdr(stellar_xdr::next::Limits::none())
+                    .unwrap(),
+                Limits::none(),
+            )
+            .unwrap(),
             durability: self.durability,
-            last_modified: self.last_modified
+            last_modified: self.last_modified,
         }
     }
 }

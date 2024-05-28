@@ -5,8 +5,8 @@ use std::io::Read;
 
 use clap::{Parser, Subcommand};
 
-mod parser;
 mod error;
+mod parser;
 
 pub use parser::ZephyrProjectParser;
 
@@ -41,13 +41,13 @@ pub enum Commands {
 
     Catchup {
         #[arg(short, long)]
-        contracts: Vec<String>
+        contracts: Vec<String>,
     },
 
     NewProject {
         #[arg(short, long)]
         name: String,
-    }
+    },
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -59,7 +59,7 @@ struct NewZephyrTableClient {
 #[derive(Deserialize, Serialize, Debug)]
 struct CodeUploadClient {
     code: Option<Vec<u8>>,
-    force_replace: Option<bool>
+    force_replace: Option<bool>,
 }
 
 pub struct MercuryClient {
@@ -72,10 +72,7 @@ impl MercuryClient {
         Self { base_url, jwt }
     }
 
-    pub async fn new_table(
-        &self,
-        table: Table,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn new_table(&self, table: Table) -> Result<(), Box<dyn std::error::Error>> {
         let columns = table.columns;
         let mut cols = Vec::new();
 
@@ -121,7 +118,11 @@ impl MercuryClient {
         Ok(())
     }
 
-    pub async fn deploy(&self, wasm: String, force_replace: bool) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn deploy(
+        &self,
+        wasm: String,
+        force_replace: bool,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         println!("Reading wasm {}", wasm);
         let mut input_file = File::open(wasm)?;
 
@@ -129,7 +130,10 @@ impl MercuryClient {
         input_file.read_to_end(&mut buffer)?;
         println!("(Size of program is {})", buffer.len());
 
-        let code = CodeUploadClient { code: Some(buffer),  force_replace: Some(force_replace)};
+        let code = CodeUploadClient {
+            code: Some(buffer),
+            force_replace: Some(force_replace),
+        };
         let json_code = serde_json::to_string(&code)?;
 
         let url = format!("{}/zephyr_upload", &self.base_url);
@@ -159,7 +163,9 @@ impl MercuryClient {
     }
 
     pub async fn catchup(&self, contracts: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
-        let mode = CatchupRequest { mode: ExecutionMode::EventCatchup(contracts) };
+        let mode = CatchupRequest {
+            mode: ExecutionMode::EventCatchup(contracts),
+        };
         let json_code = serde_json::to_string(&mode)?;
 
         let url = format!("{}/zephyr/execute", &self.base_url);
@@ -177,11 +183,15 @@ impl MercuryClient {
             .unwrap();
 
         if response.status().is_success() {
-            println!("Catchup request sent successfully: {}", response.text().await.unwrap())
+            println!(
+                "Catchup request sent successfully: {}",
+                response.text().await.unwrap()
+            )
         } else {
             println!(
                 "[-] Request failed with status code: {:?}, {}",
-                response.status(), response.text().await.unwrap()
+                response.status(),
+                response.text().await.unwrap()
             );
         };
 
@@ -192,17 +202,16 @@ impl MercuryClient {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct InvokeZephyrFunction {
     fname: String,
-    arguments: String
+    arguments: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum ExecutionMode {
     EventCatchup(Vec<String>),
-    Function(InvokeZephyrFunction)
+    Function(InvokeZephyrFunction),
 }
-
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CatchupRequest {
-    mode: ExecutionMode
+    mode: ExecutionMode,
 }

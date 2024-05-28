@@ -1,4 +1,8 @@
-use soroban_sdk::xdr::{ContractEvent, ContractEventBody, GeneralizedTransactionSet, LedgerCloseMeta, LedgerEntry, LedgerEntryChange, LedgerKey, ReadXdr, ScVal, TransactionEnvelope, TransactionMeta, TransactionPhase, TransactionResultMeta, TransactionResultResult, TxSetComponent, VecM};
+use soroban_sdk::xdr::{
+    ContractEvent, ContractEventBody, GeneralizedTransactionSet, LedgerCloseMeta, LedgerEntry,
+    LedgerEntryChange, LedgerKey, ReadXdr, ScVal, TransactionEnvelope, TransactionMeta,
+    TransactionPhase, TransactionResultMeta, TransactionResultResult, TxSetComponent, VecM,
+};
 
 /// Represents all of the entry changes that happened in the
 /// ledger close.
@@ -11,10 +15,10 @@ pub struct EntryChanges {
     pub created: Vec<LedgerEntry>,
 }
 
-/// Ledger meta reader. 
-/// 
+/// Ledger meta reader.
+///
 /// Aids developers in dealing with raw XDR structures.
-/// 
+///
 pub struct MetaReader<'a>(&'a soroban_sdk::xdr::LedgerCloseMeta);
 
 #[allow(missing_docs)]
@@ -41,9 +45,7 @@ impl<'a> MetaReader<'a> {
 
     pub fn envelopes(&self) -> Vec<TransactionEnvelope> {
         match &self.0 {
-            LedgerCloseMeta::V0(v0) => {
-                v0.tx_set.txs.to_vec()
-            },
+            LedgerCloseMeta::V0(v0) => v0.tx_set.txs.to_vec(),
             LedgerCloseMeta::V1(v1) => {
                 let phases = match &v1.tx_set {
                     GeneralizedTransactionSet::V1(v1) => &v1.phases,
@@ -76,7 +78,7 @@ impl<'a> MetaReader<'a> {
 
     pub fn envelopes_with_meta(&self) -> Vec<(&TransactionEnvelope, &TransactionResultMeta)> {
         let mut composed = Vec::new();
-        
+
         match &self.0 {
             LedgerCloseMeta::V0(_) => (), // todo
             LedgerCloseMeta::V1(v1) => {
@@ -92,9 +94,11 @@ impl<'a> MetaReader<'a> {
                                     TxSetComponent::TxsetCompTxsMaybeDiscountedFee(
                                         txset_maybe_discounted_fee,
                                     ) => {
-                                        for (idx, tx_envelope) in txset_maybe_discounted_fee.txs.iter().enumerate() {
+                                        for (idx, tx_envelope) in
+                                            txset_maybe_discounted_fee.txs.iter().enumerate()
+                                        {
                                             let txmeta = &v1.tx_processing[idx];
-                                            
+
                                             composed.push((tx_envelope, txmeta))
                                         }
                                     }
@@ -103,22 +107,16 @@ impl<'a> MetaReader<'a> {
                         }
                     }
                 }
-
             }
         };
 
         composed
     }
 
-
     pub fn tx_processing(&self) -> Vec<TransactionResultMeta> {
         match &self.0 {
-            LedgerCloseMeta::V1(v1) => {
-                v1.tx_processing.to_vec()
-            },
-            LedgerCloseMeta::V0(v0) => {
-                v0.tx_processing.to_vec()
-            },
+            LedgerCloseMeta::V1(v1) => v1.tx_processing.to_vec(),
+            LedgerCloseMeta::V0(v0) => v0.tx_processing.to_vec(),
         }
     }
 
@@ -136,7 +134,7 @@ impl<'a> MetaReader<'a> {
                     let success = match result {
                         TransactionResultResult::TxSuccess(_) => true,
                         TransactionResultResult::TxFeeBumpInnerSuccess(_) => true,
-                        _ => false
+                        _ => false,
                     };
 
                     if success {
@@ -227,7 +225,7 @@ impl<'a> MetaReader<'a> {
 
     pub fn soroban_events(&self) -> Vec<ContractEvent> {
         let mut events = Vec::new();
-        
+
         for result in self.tx_processing() {
             if let TransactionMeta::V3(v3) = &result.tx_apply_processing {
                 if let Some(soroban) = &v3.soroban_meta {
@@ -246,12 +244,11 @@ impl<'a> MetaReader<'a> {
     }
 }
 
-
 pub struct PrettyContractEvent {
     pub raw: ContractEvent,
     pub contract: [u8; 32],
     pub topics: VecM<ScVal>,
-    pub data: ScVal
+    pub data: ScVal,
 }
 
 impl From<ContractEvent> for PrettyContractEvent {
@@ -262,7 +259,7 @@ impl From<ContractEvent> for PrettyContractEvent {
             contract: value.contract_id.as_ref().unwrap().0,
             topics: event.topics.clone(),
             data: event.data.clone(),
-            raw: value
+            raw: value,
         }
     }
 }
@@ -273,7 +270,7 @@ pub struct PrettyMetaReader<'a> {
 impl<'a> PrettyMetaReader<'a> {
     pub fn soroban_events(&self) -> Vec<PrettyContractEvent> {
         let mut events = Vec::new();
-        
+
         for result in self.inner.tx_processing() {
             if let TransactionMeta::V3(v3) = &result.tx_apply_processing {
                 if let Some(soroban) = &v3.soroban_meta {

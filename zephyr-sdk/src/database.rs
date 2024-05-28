@@ -1,4 +1,8 @@
-use crate::{env::EnvClient, external::{env_push_stack, read_raw, update_raw, write_raw}, symbol, to_fixed, SdkError};
+use crate::{
+    env::EnvClient,
+    external::{env_push_stack, read_raw, update_raw, write_raw},
+    symbol, to_fixed, SdkError,
+};
 use serde::{Deserialize, Serialize};
 use soroban_sdk::xdr::{Limits, WriteXdr};
 
@@ -29,7 +33,7 @@ pub struct TableRows {
 /// database.
 pub enum Condition {
     /// A given column is equal to a certain object.
-    ColumnEqualTo(String, Vec<u8>)
+    ColumnEqualTo(String, Vec<u8>),
 }
 
 /// Wraps a single row.
@@ -72,32 +76,31 @@ impl Database {
             .map(|col| symbol::Symbol::try_from_bytes(col.as_bytes()).unwrap().0 as i64)
             .collect::<Vec<i64>>();
 
-        unsafe {
-            unsafe_helpers::push_head(table_name.0 as i64, cols)
-        }
-        
+        unsafe { unsafe_helpers::push_head(table_name.0 as i64, cols) }
+
         let (status, offset, size) = unsafe { read_raw() };
         SdkError::express_from_status(status)?;
-        
+
         let table = {
             let memory: *const u8 = offset as *const u8;
 
-            let slice = unsafe {
-                core::slice::from_raw_parts(memory, size as usize)
-            };
+            let slice = unsafe { core::slice::from_raw_parts(memory, size as usize) };
 
             if let Ok(table) = bincode::deserialize::<TableRows>(slice) {
                 table
             } else {
-                return Err(SdkError::Conversion)
+                return Err(SdkError::Conversion);
             }
         };
 
         Ok(table)
-
     }
 
-    pub fn write_table(table_name: &str, columns: &[&str], segments: &[&[u8]]) -> Result<(), SdkError> {
+    pub fn write_table(
+        table_name: &str,
+        columns: &[&str],
+        segments: &[&[u8]],
+    ) -> Result<(), SdkError> {
         let table_name = symbol::Symbol::try_from_bytes(table_name.as_bytes()).unwrap();
         let cols = columns
             .into_iter()
@@ -118,7 +121,12 @@ impl Database {
         SdkError::express_from_status(status)
     }
 
-    pub fn update_table(table_name: &str, columns: &[&str], segments: &[&[u8]], conditions: &[Condition]) -> Result<(), SdkError> {
+    pub fn update_table(
+        table_name: &str,
+        columns: &[&str],
+        segments: &[&[u8]],
+        conditions: &[Condition],
+    ) -> Result<(), SdkError> {
         let table_name = symbol::Symbol::try_from_bytes(table_name.as_bytes()).unwrap();
         let cols = columns
             .into_iter()
@@ -139,10 +147,14 @@ impl Database {
             let mut args = Vec::new();
             for cond in conditions {
                 let (colname, operator, value) = match cond {
-                    Condition::ColumnEqualTo(colname, value) => (colname, 0, value)
+                    Condition::ColumnEqualTo(colname, value) => (colname, 0, value),
                 };
 
-                env_push_stack(symbol::Symbol::try_from_bytes(colname.as_bytes()).unwrap().0 as i64);
+                env_push_stack(
+                    symbol::Symbol::try_from_bytes(colname.as_bytes())
+                        .unwrap()
+                        .0 as i64,
+                );
                 env_push_stack(operator as i64);
 
                 args.push((value.as_ptr() as i64, value.len() as i64))
@@ -161,19 +173,15 @@ impl Database {
     }
 }
 
-
 /// Simple wrapper for building conditions.
 pub struct UpdateTable {
-    conditions: Vec<Condition>
+    conditions: Vec<Condition>,
 }
-
 
 impl UpdateTable {
     /// Creates a new table update object.
     pub fn new() -> Self {
-        Self {
-            conditions: vec![]
-        }
+        Self { conditions: vec![] }
     }
 
     /// Adds a new condition in the update according to which a given column
@@ -188,7 +196,7 @@ impl UpdateTable {
 
     /// Adds a new condition in the update according to which a given column
     /// should be equal to the matching bytes array.
-    /// 
+    ///
     /// This filter should be used when dealing with non-XDR types. Serialization
     /// must be carried by the implementor.
     pub fn column_equal_to_bytes(&mut self, column: impl ToString, bytes: &[u8]) -> &mut Self {
@@ -198,7 +206,6 @@ impl UpdateTable {
         self
     }
 
-
     /// Executes the update.
     pub fn execute(&mut self, interact: &impl DatabaseInteract) {
         interact.update(&EnvClient::empty(), &self.conditions)
@@ -207,9 +214,10 @@ impl UpdateTable {
 
 /// Trait that DatabaseDerive structures implement
 pub trait DatabaseInteract {
-    
     /// Reads from the database into a vector of `Self`.
-    fn read_to_rows(env: &EnvClient) -> Vec<Self> where Self: Sized;
+    fn read_to_rows(env: &EnvClient) -> Vec<Self>
+    where
+        Self: Sized;
 
     /// Inserts a row `Self` into the database table.
     fn put(&self, env: &EnvClient);
