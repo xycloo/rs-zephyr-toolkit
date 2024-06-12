@@ -1,6 +1,6 @@
 [package]
 name = "zephyr-sdk"
-version = "0.1.5-rc1"
+version = "0.1.6"
 edition = "2021"
 authors = ["Tommaso De Ponti @ xyclooLabs <tommaso@xycloo.com>"]
 description = "Rust SDK for building Zephyr programs."
