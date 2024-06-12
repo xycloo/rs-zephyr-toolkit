@@ -1,11 +1,11 @@
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{self, parse_macro_input, DeriveInput, Expr, ExprLit, FieldsNamed, Ident, Lit, LitStr, Type};
+use syn::{self, ext, parse_macro_input, DeriveInput, Expr, ExprLit, FieldsNamed, Ident, Lit, LitStr, Type};
 
 // todo: clean code
 
-#[proc_macro_derive(DatabaseInteract, attributes(with_name))]
+#[proc_macro_derive(DatabaseInteract, attributes(with_name, external))]
 pub fn database_interact_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let struct_name = &input.ident;
@@ -26,6 +26,31 @@ pub fn database_interact_derive(input: TokenStream) -> TokenStream {
             panic!("No table name provided")
         } 
     }).expect("No with_name attribute");
+
+    let external = input.attrs.iter().find_map(|attr| {
+        if attr.path().is_ident("external") {
+            let value: Expr = attr.parse_args().unwrap();
+            if let Expr::Lit(ExprLit { lit, .. }) = value {
+                if let Lit::Str(value) = lit {
+                    return Some(value.value().parse::<i64>().expect("Cannot parse external to i64"))
+                } else {
+                    panic!("Invalid lit type")
+                }
+            } else {
+                panic!("Invalid type")
+            }
+        } else {
+            return None
+        } 
+    });
+
+    let (is_external, external) = {
+        if let Some(external) = external {
+            (true, external)
+        } else {
+            (false, 0)
+        }
+    };
 
     let idents: Vec<(Ident, usize, Ident)> = match input.data {
         syn::Data::Struct(s) => match s.fields {
@@ -129,8 +154,19 @@ pub fn database_interact_derive(input: TokenStream) -> TokenStream {
     // Actual trait implementation generation
     let expanded = quote! {
         impl DatabaseInteract for #struct_name {
-            fn read_to_rows(env: &EnvClient) -> Vec<Self> where Self: Sized {
-                let rows = env.db_read(&#with_name_attr, &[#(#field_literals),*]).unwrap();
+            fn read_to_rows(env: &EnvClient, conditions: Option<&[Condition]>) -> Vec<Self> where Self: Sized {
+                let external = if #is_external {
+                    Some(#external)
+                } else {
+                    None
+                };
+
+                env.log().debug("calling the zephyr host db read", None);
+                let rows = env.db_read(&#with_name_attr, &[#(#field_literals),*], external, conditions);
+                if rows.is_err() {
+                    env.log().debug(format!("dbread failed {:?}", rows.as_ref().err()), None);
+                }
+                let rows = rows.unwrap();
                 let mut result = Vec::new();
                 
                 for row in rows.rows {

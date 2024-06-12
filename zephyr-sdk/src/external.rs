@@ -71,6 +71,10 @@ extern "C" {
     pub fn read_raw() -> (i64, i64, i64);
 
     #[allow(improper_ctypes)] // we alllow as we enabled multi-value
+    #[link_name = "read_as_id"]
+    pub fn read_as_id(id: i64) -> (i64, i64, i64);
+
+    #[allow(improper_ctypes)] // we alllow as we enabled multi-value
     #[link_name = "write_raw"]
     pub fn write_raw() -> i64;
 

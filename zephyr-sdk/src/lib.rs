@@ -34,6 +34,7 @@
 
 #![warn(missing_docs)]
 
+pub mod charting;
 mod database;
 mod env;
 mod external;
@@ -101,6 +102,12 @@ pub enum SdkError {
 
     #[error("Incorrect host configurations.")]
     HostConfiguration,
+
+    #[error("Incorrect conditional instruction. Cannot read on an update action.")]
+    ReadOnUpdateAction,
+
+    #[error("Incorrect conditional instruction. Cannot update on a read action.")]
+    UpdateOnReadAction,
 
     #[error("Unknown error.")]
     Unknown,

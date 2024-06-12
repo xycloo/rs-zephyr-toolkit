@@ -13,7 +13,7 @@ use soroban_sdk::{
 };
 
 use crate::{
-    database::{Database, DatabaseInteract, UpdateTable},
+    database::{Database, DatabaseInteract, TableQueryWrapper},
     external::{
         self, conclude_host, read_ledger_meta, scval_to_valid_host_val, soroban_simulate_tx,
         tx_send_message,
@@ -48,6 +48,16 @@ impl EnvClient {
         scval: &soroban_sdk::xdr::ScVal,
     ) -> T {
         self.scval_to_valid_host_val(scval).unwrap()
+    }
+
+    /// Converts an ScVal into a soroban host object.
+    /// Returns a Soroban Val.
+    /// Returns an error when the conversion fails.
+    pub fn try_from_scval<T: soroban_sdk::TryFromVal<soroban_sdk::Env, soroban_sdk::Val>>(
+        &self,
+        scval: &soroban_sdk::xdr::ScVal,
+    ) -> Result<T, SdkError> {
+        self.scval_to_valid_host_val(scval)
     }
 
     /// Converts an environment object to the corresponding scval
@@ -89,7 +99,7 @@ impl EnvClient {
 
         let val = soroban_sdk::Val::from_payload(val as u64);
 
-        Ok(T::try_from_val(&self.soroban(), &val).unwrap())
+        T::try_from_val(&self.soroban(), &val).map_err(|_| SdkError::Conversion)
     }
 
     pub(crate) fn message_relay(message: impl Serialize) {
@@ -113,7 +123,11 @@ impl EnvClient {
     /// along with the `DatabaseDerive` macro to read the rows
     /// into a `DatabaseDerive` struct.
     pub fn read<T: DatabaseInteract>(&self) -> Vec<T> {
-        T::read_to_rows(&self)
+        T::read_to_rows(&self, None)
+    }
+
+    pub fn read_filter(&self) -> TableQueryWrapper {
+        TableQueryWrapper::new(crate::database::Action::Read)
     }
 
     /// Writes a row to a database table.
@@ -130,8 +144,8 @@ impl EnvClient {
     /// This function uses the [`DatabaseInteract`] trait
     /// along with the `DatabaseDerive` macro to update the row
     /// derived from the `DatabaseDerive` struct.
-    pub fn update(&self) -> UpdateTable {
-        UpdateTable::new()
+    pub fn update(&self) -> TableQueryWrapper {
+        TableQueryWrapper::new(crate::database::Action::Update)
     }
 
     /// Updates a row to a database table.
@@ -165,8 +179,14 @@ impl EnvClient {
     }
 
     /// Raw function to read from database.
-    pub fn db_read(&self, table_name: &str, columns: &[&str]) -> Result<TableRows, SdkError> {
-        Database::read_table(table_name, columns)
+    pub fn db_read(
+        &self,
+        table_name: &str,
+        columns: &[&str],
+        external: Option<i64>,
+        conditions: Option<&[Condition]>,
+    ) -> Result<TableRows, SdkError> {
+        Database::read_table(table_name, columns, external, conditions)
     }
 
     /// Returns the XDR reader object.
