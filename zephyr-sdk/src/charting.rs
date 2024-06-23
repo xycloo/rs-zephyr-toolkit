@@ -6,6 +6,8 @@ mod table;
 
 #[derive(Serialize, Default)]
 pub struct Dashboard {
+    title: Option<Title>,
+    description: Option<String>,
     data: Vec<DashboardEntry>,
 }
 
@@ -43,6 +45,16 @@ pub struct DashboardEntry {
 }
 
 impl Dashboard {
+    pub fn title(mut self, title: &impl ToString) -> Self {
+        self.title = Some(Title { text: title.to_string() });
+        self
+    }
+
+    pub fn description(mut self, description: &impl ToString) -> Self {
+        self.description = Some(description.to_string());
+        self
+    }
+
     pub fn entry(mut self, entry: DashboardEntry) -> Self {
         self.data.push(entry);
         self
