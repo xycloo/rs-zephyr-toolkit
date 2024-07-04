@@ -161,7 +161,6 @@ pub fn database_interact_derive(input: TokenStream) -> TokenStream {
                     None
                 };
 
-                env.log().debug("calling the zephyr host db read", None);
                 let rows = env.db_read(&#with_name_attr, &[#(#field_literals),*], external, conditions);
                 if rows.is_err() {
                     env.log().debug(format!("dbread failed {:?}", rows.as_ref().err()), None);

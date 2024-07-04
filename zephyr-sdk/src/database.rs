@@ -284,12 +284,10 @@ impl TableQueryWrapper {
     pub fn read<T: DatabaseInteract>(&self) -> Result<Vec<T>, SdkError> {
         let env = EnvClient::empty();
 
-        env.log().debug("Reading with conditions", None);
         if self.action != Action::Read {
             return Err(SdkError::UpdateOnReadAction);
         }
 
-        env.log().debug("Reading to rows", None);
         Ok(T::read_to_rows(&env, Some(&self.conditions)))
     }
 }
