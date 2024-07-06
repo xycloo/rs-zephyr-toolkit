@@ -244,6 +244,7 @@ impl<'a> MetaReader<'a> {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct PrettyContractEvent {
     pub raw: ContractEvent,
     pub contract: [u8; 32],

@@ -34,6 +34,10 @@
 
 #![warn(missing_docs)]
 
+#[cfg(test)]
+pub mod testutils;
+
+/// Charting utilities and wrappers.
 pub mod charting;
 mod database;
 mod env;
@@ -53,19 +57,15 @@ use soroban_sdk::xdr::Limits;
 use soroban_sdk::xdr::ReadXdr;
 use soroban_sdk::xdr::ScAddress;
 use soroban_sdk::xdr::ScVal;
-use soroban_sdk::xdr::Transaction;
-//use soroban_sdk::xdr::WriteXdr;
 use stellar_xdr::next::WriteXdr;
 use thiserror::Error;
 
 pub use database::{DatabaseInteract, TableRow, TableRows};
 pub use env::EnvClient;
-pub use ledger_meta::MetaReader;
+pub use ledger_meta::{MetaReader, PrettyContractEvent};
 pub use logger::EnvLogger;
-//pub use rs_zephyr_common::ContractDataEntry;
 pub use ledger_meta::EntryChanges;
 pub use soroban_sdk;
-//pub use stellar_xdr;
 pub use bincode;
 pub use database::Condition;
 pub use macros::DatabaseInteract as DatabaseDerive;
