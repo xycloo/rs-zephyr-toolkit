@@ -56,6 +56,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         Some(Commands::Catchup { contracts }) => {
+            println!("[+] You're performing a data catchup, make sure you are subscribed to the contracts you're catchup up with! Check out https://docs.mercurydata.app/zephyr-full-customization/catchups-data-backfill#id-1.-subscribe-to-the-contracts-events for more info.");
             if client.catchup(contracts).await.is_err() {
                 println!("Catchup request failed client-side.")
             }
@@ -127,7 +128,7 @@ pub extern "C" fn on_close() {
                 .append(true)
                 .open(format!("{}/Cargo.toml", name))?;
             cargo_toml.write(
-                r#"zephyr-sdk = { version = "0.1.6" }
+                r#"zephyr-sdk = { version = "0.1.7" }
 
 [lib]
 crate-type = ["cdylib"]
