@@ -22,7 +22,7 @@ macros = { package = "zephyr-macros", version = "0.1.1" }
 serde_json = "1.0"
 stellar-strkey = "0.0.8"
 charming-fork-zephyr = "0.3.1"
-zephyr = {package = "zephyr-vm", path = "../../zephyr/rs-zephyr-env", features = ["testutils"], optional = true}
+zephyr = {package = "zephyr-vm", version = "0.1.0", path = "../../zephyr/rs-zephyr-env", features = ["testutils"], optional = true}
 
 [dependencies.soroban-sdk]
 version = "20.0.5"
