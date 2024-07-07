@@ -1,6 +1,6 @@
 [package]
 name = "zephyr-sdk"
-version = "0.1.6"
+version = "0.1.7"
 edition = "2021"
 authors = ["Tommaso De Ponti @ xyclooLabs <tommaso@xycloo.com>"]
 description = "Rust SDK for building Zephyr programs."
@@ -15,17 +15,20 @@ stellar-xdr = { version = "20.1.0", default-features = false, features=["next", 
 bincode = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "1.0.49"
-rs-zephyr-common = { version = "0.1.2" }
+rs-zephyr-common = { version = "0.1.3" }
+#rs-zephyr-common = { path = "../zephyr-common" }
 macros = { package = "zephyr-macros", version = "0.1.1" }
 #macros = { package = "zephyr-macros", path = "../macros" }
 serde_json = "1.0"
 stellar-strkey = "0.0.8"
 charming-fork-zephyr = "0.3.1"
-
-[dev-dependencies]
-zephyr = {path = "../../zephyr/rs-zephyr-env", features = ["testutils"]}
+zephyr = {path = "../../zephyr/rs-zephyr-env", features = ["testutils"], optional = true}
 
 [dependencies.soroban-sdk]
 version = "20.0.5"
 #path = "../../rs-soroban-sdk/soroban-sdk"
 features = ["alloc"]
+
+[features]
+default = []
+testutils = ["dep:zephyr"]

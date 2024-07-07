@@ -4,12 +4,12 @@ use rs_zephyr_common::{http::AgnosticRequest, wrapping::WrappedMaxBytes, Relayed
 use serde::{Deserialize, Serialize};
 use soroban_sdk::{
     xdr::{
-        AccountId, ContractEvent, DiagnosticEvent, Hash, HostFunction, InvokeContractArgs,
-        InvokeHostFunctionOp, LedgerEntry, Limits, Operation, OperationBody, PublicKey, ReadXdr,
-        ScVal, ScVec, SequenceNumber, SorobanAuthorizationEntry, SorobanTransactionData,
-        Transaction, TransactionEnvelope, TransactionV1Envelope, Uint256, VecM, WriteXdr,
+        ContractEvent, DiagnosticEvent, Hash, HostFunction, InvokeContractArgs,
+        InvokeHostFunctionOp, LedgerEntry, Limits, Operation, OperationBody, ReadXdr,
+        ScVal, SequenceNumber, SorobanAuthorizationEntry, SorobanTransactionData,
+        Transaction, TransactionEnvelope, TransactionV1Envelope, Uint256, WriteXdr,
     },
-    TryIntoVal, Val,
+    Val,
 };
 
 use crate::{
@@ -126,6 +126,8 @@ impl EnvClient {
         T::read_to_rows(&self, None)
     }
 
+    /// Read a database table applying a column-level filter.
+    /// Returns a filter object.
     pub fn read_filter(&self) -> TableQueryWrapper {
         TableQueryWrapper::new(crate::database::Action::Read)
     }

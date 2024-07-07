@@ -34,7 +34,7 @@
 
 #![warn(missing_docs)]
 
-#[cfg(test)]
+#[cfg(feature = "testutils")]
 pub mod testutils;
 
 /// Charting utilities and wrappers.

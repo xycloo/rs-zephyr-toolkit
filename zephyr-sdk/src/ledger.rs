@@ -130,7 +130,7 @@ impl EnvClient {
         };
 
         let resp = Self::express_and_deser_entry(status, inbound_offset, inbound_size)?;
-        println!("{:?}", resp);
+
         if resp.is_none() {
             return Ok(None);
         }
