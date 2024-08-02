@@ -1,6 +1,6 @@
 use soroban_sdk::xdr::{
     ContractEvent, ContractEventBody, GeneralizedTransactionSet, LedgerCloseMeta, LedgerEntry,
-    LedgerEntryChange, LedgerKey, ReadXdr, ScVal, TransactionEnvelope, TransactionMeta,
+    LedgerEntryChange, LedgerKey, ScVal, TransactionEnvelope, TransactionMeta,
     TransactionPhase, TransactionResultMeta, TransactionResultResult, TxSetComponent, VecM,
 };
 
@@ -244,11 +244,19 @@ impl<'a> MetaReader<'a> {
     }
 }
 
+/// Pretty representation of a Soroban event.
 #[derive(Clone, Debug)]
 pub struct PrettyContractEvent {
+    /// Event xdr that derived this object.
     pub raw: ContractEvent,
+    
+    /// Contract address that emitted the event.
     pub contract: [u8; 32],
+
+    /// Contract event topics.
     pub topics: VecM<ScVal>,
+    
+    /// Contract event data
     pub data: ScVal,
 }
 
@@ -277,6 +285,24 @@ impl<'a> PrettyMetaReader<'a> {
                 if let Some(soroban) = &v3.soroban_meta {
                     for event in soroban.events.iter() {
                         events.push(event.clone().into())
+                    }
+                }
+            }
+        }
+
+        events
+    }
+
+    pub fn soroban_events_and_txhash(&self) -> Vec<(PrettyContractEvent, [u8; 32])> {
+        let mut events = Vec::new();
+        
+        for result in self.inner.tx_processing() {
+            let txhash = result.result.transaction_hash.0;
+
+            if let TransactionMeta::V3(v3) = &result.tx_apply_processing {
+                if let Some(soroban) = &v3.soroban_meta {
+                    for event in soroban.events.iter() {
+                        events.push((event.clone().into(), txhash))
                     }
                 }
             }

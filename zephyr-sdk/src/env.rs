@@ -265,11 +265,10 @@ impl EnvClient {
 
     fn get_host_function(
         &self,
-        source: String,
         contract: [u8; 32],
         fname: soroban_sdk::Symbol,
         args: soroban_sdk::Vec<Val>,
-    ) -> (HostFunction) {
+    ) -> HostFunction {
         let contract_address = soroban_sdk::xdr::ScAddress::Contract(Hash(contract));
         let ScVal::Symbol(function_name) = self.to_scval(fname) else {
             panic!()
@@ -306,7 +305,7 @@ impl EnvClient {
             .0;
         self.simulate(
             source_bytes,
-            self.get_host_function(source, contract, fname, args),
+            self.get_host_function(contract, fname, args),
         )
     }
 
@@ -322,7 +321,7 @@ impl EnvClient {
         let source_bytes = stellar_strkey::ed25519::PublicKey::from_string(&source)
             .unwrap()
             .0;
-        let hf = self.get_host_function(source, contract, fname, args);
+        let hf = self.get_host_function(contract, fname, args);
         let simulation = self.simulate(source_bytes, hf.clone())?;
 
         let mut response = TransactionResponse {

@@ -5,9 +5,11 @@ use rs_zephyr_common::{
 
 use crate::env::EnvClient;
 
+/// Logger object.
 pub struct EnvLogger;
 
 impl EnvLogger {
+    /// Logs an error to the environment.
     pub fn error(&self, message: impl ToString, data: Option<Vec<u8>>) {
         let log = ZephyrLog {
             level: LogLevel::Error,
@@ -18,6 +20,7 @@ impl EnvLogger {
         EnvClient::message_relay(RelayedMessageRequest::Log(log));
     }
 
+    /// Logs a debug event to the environment.
     pub fn debug(&self, message: impl ToString, data: Option<Vec<u8>>) {
         let log = ZephyrLog {
             level: LogLevel::Debug,
@@ -28,6 +31,7 @@ impl EnvLogger {
         EnvClient::message_relay(RelayedMessageRequest::Log(log));
     }
 
+    /// Logs a warning to the environment.
     pub fn warning(&self, message: impl ToString, data: Option<Vec<u8>>) {
         let log = ZephyrLog {
             level: LogLevel::Warning,

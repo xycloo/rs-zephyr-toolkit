@@ -255,6 +255,11 @@ impl TableQueryWrapper {
         self
     }
 
+    /// Adds a new condition in the update according to which a given column
+    /// should be equal to the matching object.
+    /// 
+    /// Under the hood, the object is converted to a ZephyrVal and is later
+    /// serialized. 
     pub fn column_equal_to<T: Serialize + TryInto<ZephyrVal>>(
         &mut self,
         column: impl ToString,
@@ -273,6 +278,7 @@ impl TableQueryWrapper {
     }
 
     /// Executes the update.
+    /// Note: should only be used when updating a table.
     pub fn execute(&mut self, interact: &impl DatabaseInteract) -> Result<(), SdkError> {
         if self.action != Action::Update {
             return Err(SdkError::ReadOnUpdateAction);
@@ -281,6 +287,7 @@ impl TableQueryWrapper {
         Ok(interact.update(&EnvClient::empty(), &self.conditions))
     }
 
+    /// Executes the query and returns the results.
     pub fn read<T: DatabaseInteract>(&self) -> Result<Vec<T>, SdkError> {
         let env = EnvClient::empty();
 

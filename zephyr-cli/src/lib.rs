@@ -42,6 +42,21 @@ pub enum Commands {
     Catchup {
         #[arg(short, long)]
         contracts: Vec<String>,
+
+        #[arg(short, long)]
+        start: Option<i64>,
+
+        #[arg(short, long)]
+        topic1s: Option<Vec<String>>,
+
+        #[arg(short, long)]
+        topic2s: Option<Vec<String>>,
+
+        #[arg(short, long)]
+        topic3s: Option<Vec<String>>,
+
+        #[arg(short, long)]
+        topic4s: Option<Vec<String>>,
     },
 
     NewProject {
@@ -162,11 +177,46 @@ impl MercuryClient {
         Ok(())
     }
 
-    pub async fn catchup(&self, contracts: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
-        let mode = CatchupRequest {
+    pub async fn catchup_standard(
+        &self,
+        contracts: Vec<String>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let request = CatchupRequest {
             mode: ExecutionMode::EventCatchup(contracts),
         };
-        let json_code = serde_json::to_string(&mode)?;
+
+        self.catchup(request).await?;
+
+        Ok(())
+    }
+
+    pub async fn catchup_scoped(
+        &self,
+        contracts: Vec<String>,
+        topic1s: Vec<String>,
+        topic2s: Vec<String>,
+        topic3s: Vec<String>,
+        topic4s: Vec<String>,
+        start: i64,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let request = CatchupRequest {
+            mode: ExecutionMode::EventCatchupScoped(ScopedEventCatchup {
+                contracts,
+                topic1s,
+                topic2s,
+                topic3s,
+                topic4s,
+                start,
+            }),
+        };
+
+        self.catchup(request).await?;
+
+        Ok(())
+    }
+
+    async fn catchup(&self, request: CatchupRequest) -> Result<(), Box<dyn std::error::Error>> {
+        let json_code = serde_json::to_string(&request)?;
 
         let url = format!("{}/zephyr/execute", &self.base_url);
         let authorization = format!("Bearer {}", &self.jwt);
@@ -206,8 +256,19 @@ pub struct InvokeZephyrFunction {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ScopedEventCatchup {
+    contracts: Vec<String>,
+    topic1s: Vec<String>,
+    topic2s: Vec<String>,
+    topic3s: Vec<String>,
+    topic4s: Vec<String>,
+    start: i64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum ExecutionMode {
     EventCatchup(Vec<String>),
+    EventCatchupScoped(ScopedEventCatchup),
     Function(InvokeZephyrFunction),
 }
 

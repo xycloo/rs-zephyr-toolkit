@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use charming_fork_zephyr::Chart;
 use serde::Serialize;
 pub use table::Table;
