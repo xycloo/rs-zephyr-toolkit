@@ -39,6 +39,8 @@ pub enum Commands {
         force: Option<bool>,
     },
 
+    Build,
+
     Catchup {
         #[arg(short, long)]
         contracts: Vec<String>,

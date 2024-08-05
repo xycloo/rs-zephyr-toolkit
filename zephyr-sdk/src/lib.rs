@@ -72,7 +72,7 @@ use thiserror::Error;
 
 pub use database::{DatabaseInteract, TableRow, TableRows};
 pub use env::EnvClient;
-pub use ledger_meta::{MetaReader, PrettyContractEvent};
+pub use ledger_meta::{MetaReader, PrettyMetaReader, PrettyContractEvent};
 pub use logger::EnvLogger;
 pub use ledger_meta::EntryChanges;
 pub use soroban_sdk;

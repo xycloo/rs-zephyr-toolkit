@@ -55,7 +55,6 @@ impl ZephyrProjectParser {
     pub fn build_wasm(&self) -> Result<()> {
         let output = Command::new("cargo")
             .args(&[
-                "+nightly",
                 "build",
                 "--release",
                 "--target=wasm32-unknown-unknown",

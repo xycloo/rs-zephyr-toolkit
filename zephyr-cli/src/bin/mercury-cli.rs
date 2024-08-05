@@ -55,6 +55,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
+        Some(Commands::Build) => {
+            let parser = ZephyrProjectParser::from_path(client, "./zephyr.toml").unwrap();
+            println!("Building binary ...");
+            parser.build_wasm().unwrap();
+        }
+
         Some(Commands::Catchup {
             contracts,
             topic1s,
