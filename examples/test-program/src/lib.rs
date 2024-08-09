@@ -120,10 +120,14 @@ mod test {
         // We make sure first that there haven't been any issues in the host by asserting
         // that the outer result is ok.
         // Then we assert that there was no error on the guest side (inner result) too.
+        let start = std::time::Instant::now();
+
         let invocation = program.invoke_vm("on_close").await;
         assert!(invocation.is_ok());
         let inner_invocation = invocation.unwrap();
         assert!(inner_invocation.is_ok());
+
+        println!("Elapsed: {:?}", start.elapsed());
 
         // A new row has been indexed in the database.
         assert_eq!(db.get_rows_number(0, "events").await.unwrap(), 1);

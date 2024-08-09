@@ -103,6 +103,19 @@ pub struct ContractDataEntry {
     pub last_modified: i32,
 }
 
+
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+pub struct Account {
+    pub account_id: String,
+    pub native_balance: f64,
+    pub buying_liabilities: f64,
+    pub selling_liabilities: f64,
+    pub seq_num: f64,
+    pub num_subentries: i32,
+    pub num_sponsored: i32,
+    pub num_sponsoring: i32,
+}
+
 macro_rules! impl_inner_from {
     ($variant:ident, $inner:ty) => {
         impl From<$inner> for ZephyrVal {
