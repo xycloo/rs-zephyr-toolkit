@@ -3,27 +3,27 @@ use std::fmt::Debug;
 use crate::{
     env::EnvClient,
     external::{
-        read_contract_data_entry_by_contract_id_and_key, read_contract_entries_by_contract,
-        read_contract_entries_by_contract_to_env, read_contract_instance,
+        read_account_from_ledger, read_contract_data_entry_by_contract_id_and_key, read_contract_entries_by_contract, read_contract_entries_by_contract_to_env, read_contract_instance
     },
     ContractDataEntry, ContractDataEntryStellarXDR, SdkError,
 };
-use rs_zephyr_common::wrapping::WrappedMaxBytes;
+use rs_zephyr_common::{wrapping::WrappedMaxBytes, Account};
+use serde::Deserialize;
 use soroban_sdk::xdr::{LedgerEntryData, Limits, ScVal, WriteXdr};
 use soroban_sdk::{Map, TryFromVal, Val};
 
 impl EnvClient {
-    fn express_and_deser_entry(
+    fn express_and_deser_entry<'a, D: Deserialize<'a> + Into<O>, O>(
         status: i64,
         offset: i64,
         size: i64,
-    ) -> Result<Option<ContractDataEntry>, SdkError> {
+    ) -> Result<Option<O>, SdkError> {
         SdkError::express_from_status(status)?;
 
         let memory: *const u8 = offset as *const u8;
         let slice = unsafe { core::slice::from_raw_parts(memory, size as usize) };
 
-        let deser = bincode::deserialize::<Option<ContractDataEntryStellarXDR>>(slice)
+        let deser = bincode::deserialize::<Option<D>>(slice)
             .map_err(|_| SdkError::Conversion)?;
         if deser.is_none() {
             return Ok(None);
@@ -47,7 +47,7 @@ impl EnvClient {
             )
         };
 
-        Self::express_and_deser_entry(status, offset, size)
+        Self::express_and_deser_entry::<ContractDataEntryStellarXDR, ContractDataEntry>(status, offset, size)
     }
 
     /// Returns the requested entry object of a certain contract
@@ -72,7 +72,7 @@ impl EnvClient {
             )
         };
 
-        Self::express_and_deser_entry(status, inbound_offset, inbound_size)
+        Self::express_and_deser_entry::<ContractDataEntryStellarXDR, ContractDataEntry>(status, inbound_offset, inbound_size)
     }
 
     /// Returns the whole requested entry object of a certain contract
@@ -100,7 +100,7 @@ impl EnvClient {
             )
         };
 
-        Self::express_and_deser_entry(status, inbound_offset, inbound_size)
+        Self::express_and_deser_entry::<ContractDataEntryStellarXDR, ContractDataEntry>(status, inbound_offset, inbound_size)
     }
 
     /// Returns the requested entry object of a certain contract
@@ -129,7 +129,7 @@ impl EnvClient {
             )
         };
 
-        let resp = Self::express_and_deser_entry(status, inbound_offset, inbound_size)?;
+        let resp = Self::express_and_deser_entry::<ContractDataEntryStellarXDR, ContractDataEntry>(status, inbound_offset, inbound_size)?;
 
         if resp.is_none() {
             return Ok(None);
@@ -191,5 +191,20 @@ impl EnvClient {
 
         let map = Map::try_from_val(env, &Val::from_payload(mapobject as u64)).unwrap();
         Ok(map)
+    }
+
+    /// Read an account object from the ledger.
+    pub fn read_account_from_ledger(&self, account: [u8;32]) -> Result<Option<Account>, SdkError> {
+        let account_parts = WrappedMaxBytes::array_to_max_parts::<4>(&account);
+        let (status, offset, size) = unsafe {
+            read_account_from_ledger(
+                account_parts[0],
+                account_parts[1],
+                account_parts[2],
+                account_parts[3],
+            )
+        };
+
+        Self::express_and_deser_entry::<Account, Account>(status, offset, size)
     }
 }

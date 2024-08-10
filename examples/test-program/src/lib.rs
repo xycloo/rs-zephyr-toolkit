@@ -2,6 +2,8 @@
 //! This is a reference of how you can test against specific
 //! situations locally.
 
+use std::fmt::format;
+
 use zephyr_sdk::{
     prelude::*,
     soroban_sdk::{
@@ -24,6 +26,7 @@ pub struct StoredEvent {
 #[no_mangle]
 pub extern "C" fn on_close() {
     let env = EnvClient::new();
+
     for event in env.reader().pretty().soroban_events() {
         // Note: we don't want to index a specific contract, so we want to make
         // sure that we don't assume anything about the events structure.
@@ -48,6 +51,13 @@ pub extern "C" fn on_close() {
             }
         }
     }
+}
+
+#[no_mangle]
+pub extern "C" fn test() {
+    let env = EnvClient::empty();
+    let account = env.read_account_from_ledger(stellar_strkey::ed25519::PublicKey::from_string("GDEAZIGD6LFY64O7PD5MIPDWY2WAGSWZHEUEUSFKK2T3MBBBYQMPSER4").unwrap().0);
+    env.log().debug(format!("{:?}", account), None)
 }
 
 #[cfg(test)]

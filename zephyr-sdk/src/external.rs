@@ -46,6 +46,15 @@ extern "C" {
     ) -> (i64, i64, i64);
 
     #[allow(improper_ctypes)]
+    #[link_name = "read_account_from_ledger"]
+    pub fn read_account_from_ledger(
+        account_part_1: i64,
+        account_part_2: i64,
+        account_part_3: i64,
+        account_part_4: i64,
+    ) -> (i64, i64, i64);
+
+    #[allow(improper_ctypes)]
     #[link_name = "scval_to_valid_host_val"]
     pub fn scval_to_valid_host_val(offset: i64, size: i64) -> (i64, i64);
 

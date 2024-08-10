@@ -9,12 +9,15 @@ edition = "2021"
 #zephyr-sdk = { version="0.1.8", features = [] }
 zephyr-sdk = { path = "../../zephyr-sdk", features = [] }
 
+stellar-strkey = "0.0.8"
+
 [dev-dependencies]
 zephyr-sdk = { path = "../../zephyr-sdk", features = ["testutils"] }
 #zephyr-sdk = { version="0.1.8", features = ["testutils"] }
 tokio = {version = "1.0", features = ["full"]}
-ledger-meta-factory = { path = "../../../zephyr/ledger-meta-factory", features = [] }
-#ledger-meta-factory = { version="0.1.1", features = [] }
+
+#ledger-meta-factory = { path = "../../../zephyr/ledger-meta-factory", features = [] }
+ledger-meta-factory = { version="0.1.1", features = [] }
 
 [dev-dependencies.stellar-xdr]
 version = "=20.1.0"
