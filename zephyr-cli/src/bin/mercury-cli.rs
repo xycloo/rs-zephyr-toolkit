@@ -47,7 +47,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 parser.build_wasm().unwrap();
                 println!("Deploying tables ...");
                 parser.deploy_tables().await.unwrap();
-
+                println!("Registering indexes (if any) ...");
+                parser.register_indexes().await.unwrap();
+                println!("Registering dashboard (if any) ...");
+                parser.register_dashboard().await.unwrap();
                 println!("Deploying wasm ...");
                 parser.deploy_wasm(target).await.unwrap();
 
@@ -83,10 +86,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     )
                     .await
             } else {
-                client.catchup_scoped(contracts, topic1s.unwrap_or(vec![]),
-                topic2s.unwrap_or(vec![]),
-                topic3s.unwrap_or(vec![]),
-                topic4s.unwrap_or(vec![]), 0).await
+                client
+                    .catchup_scoped(
+                        contracts,
+                        topic1s.unwrap_or(vec![]),
+                        topic2s.unwrap_or(vec![]),
+                        topic3s.unwrap_or(vec![]),
+                        topic4s.unwrap_or(vec![]),
+                        0,
+                    )
+                    .await
             };
 
             if result.is_err() {
@@ -148,7 +157,7 @@ rustflags = [
 #[no_mangle]
 pub extern "C" fn on_close() {
     let env = EnvClient::new();
-}            
+}
 "#
             .as_bytes();
 

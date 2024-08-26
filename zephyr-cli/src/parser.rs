@@ -2,7 +2,11 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::{fs::File, io::Read, path::Path, process::Command};
 
-use crate::{error::ParserError, MercuryClient};
+use crate::{
+    error::ParserError,
+    specification::{Dashboard, Index},
+    MercuryClient,
+};
 
 impl Config {
     fn tables(&self) -> Vec<Table> {
@@ -16,6 +20,12 @@ pub struct Config {
 
     /// Tables that the poject is writing or reading.
     pub tables: Option<Vec<Table>>,
+
+    /// Declared public indexes to register.
+    pub indexes: Option<Vec<Index>>,
+
+    /// Declared dashboard (if any) to register.
+    pub dashboard: Option<Dashboard>,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -31,8 +41,8 @@ pub struct Column {
 }
 
 pub struct ZephyrProjectParser {
-    config: Config,
-    client: MercuryClient,
+    pub(crate) config: Config,
+    pub(crate) client: MercuryClient,
 }
 
 impl ZephyrProjectParser {
@@ -54,11 +64,7 @@ impl ZephyrProjectParser {
 
     pub fn build_wasm(&self) -> Result<()> {
         let output = Command::new("cargo")
-            .args(&[
-                "build",
-                "--release",
-                "--target=wasm32-unknown-unknown",
-            ])
+            .args(&["build", "--release", "--target=wasm32-unknown-unknown"])
             .output()?;
 
         if !output.status.success() {

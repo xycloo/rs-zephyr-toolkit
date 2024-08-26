@@ -7,6 +7,7 @@ use clap::{Parser, Subcommand};
 
 mod error;
 mod parser;
+mod specification;
 
 pub use parser::ZephyrProjectParser;
 
