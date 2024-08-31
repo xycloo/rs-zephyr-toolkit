@@ -5,11 +5,11 @@ use serde::{Deserialize, Serialize};
 use soroban_sdk::{
     xdr::{
         ContractEvent, DiagnosticEvent, Hash, HostFunction, InvokeContractArgs,
-        InvokeHostFunctionOp, LedgerEntry, Limits, Operation, OperationBody, ReadXdr,
-        ScVal, SequenceNumber, SorobanAuthorizationEntry, SorobanTransactionData,
-        Transaction, TransactionEnvelope, TransactionV1Envelope, Uint256, WriteXdr,
+        InvokeHostFunctionOp, LedgerEntry, Limits, Operation, OperationBody, ReadXdr, ScVal,
+        SequenceNumber, SorobanAuthorizationEntry, SorobanTransactionData, Transaction,
+        TransactionEnvelope, TransactionV1Envelope, Uint256, WriteXdr,
     },
-    Val,
+    Address, TryFromVal, TryIntoVal, Val,
 };
 
 use crate::{
@@ -303,10 +303,7 @@ impl EnvClient {
         let source_bytes = stellar_strkey::ed25519::PublicKey::from_string(&source)
             .unwrap()
             .0;
-        self.simulate(
-            source_bytes,
-            self.get_host_function(contract, fname, args),
-        )
+        self.simulate(source_bytes, self.get_host_function(contract, fname, args))
     }
 
     /// Wrapper around self.simulate. This is a simpler SDK handler which

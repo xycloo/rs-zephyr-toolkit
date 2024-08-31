@@ -78,6 +78,7 @@ struct NewZephyrTableClient {
 struct CodeUploadClient {
     code: Option<Vec<u8>>,
     force_replace: Option<bool>,
+    project_name: Option<String>,
 }
 
 pub struct MercuryClient {
@@ -140,6 +141,7 @@ impl MercuryClient {
         &self,
         wasm: String,
         force_replace: bool,
+        project_name: Option<String>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         println!("Reading wasm {}", wasm);
         let mut input_file = File::open(wasm)?;
@@ -151,6 +153,7 @@ impl MercuryClient {
         let code = CodeUploadClient {
             code: Some(buffer),
             force_replace: Some(force_replace),
+            project_name,
         };
         let json_code = serde_json::to_string(&code)?;
 

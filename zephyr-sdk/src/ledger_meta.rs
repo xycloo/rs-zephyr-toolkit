@@ -1,8 +1,13 @@
+use sha2::{Digest, Sha256};
 use soroban_sdk::xdr::{
-    ContractEvent, ContractEventBody, GeneralizedTransactionSet, LedgerCloseMeta, LedgerEntry,
-    LedgerEntryChange, LedgerKey, ScVal, TransactionEnvelope, TransactionMeta,
-    TransactionPhase, TransactionResultMeta, TransactionResultResult, TxSetComponent, VecM,
+    ContractEvent, ContractEventBody, FeeBumpTransactionInnerTx, GeneralizedTransactionSet, Hash,
+    LedgerCloseMeta, LedgerEntry, LedgerEntryChange, LedgerKey, Limits, ScBytes, ScVal,
+    Transaction, TransactionEnvelope, TransactionMeta, TransactionPhase, TransactionResultMeta,
+    TransactionResultResult, TransactionSignaturePayload,
+    TransactionSignaturePayloadTaggedTransaction, TxSetComponent, VecM, WriteXdr,
 };
+
+use crate::EnvClient;
 
 /// Represents all of the entry changes that happened in the
 /// ledger close.
@@ -25,6 +30,29 @@ pub struct MetaReader<'a>(&'a soroban_sdk::xdr::LedgerCloseMeta);
 impl<'a> MetaReader<'a> {
     pub fn new(meta: &'a LedgerCloseMeta) -> Self {
         Self(meta)
+    }
+
+    pub fn newtork_id(&self) -> [u8; 32] {
+        let env = EnvClient::empty();
+        let ScVal::Bytes(ScBytes(val)) = env.to_scval(env.soroban().ledger().network_id()) else {
+            panic!()
+        };
+        val.try_into().unwrap()
+    }
+
+    pub fn txhash_by_transaction(&self, tx: Transaction) -> [u8; 32] {
+        let network = self.newtork_id();
+        let tagged_transaction = TransactionSignaturePayloadTaggedTransaction::Tx(tx.clone());
+
+        let payload = TransactionSignaturePayload {
+            network_id: Hash(network),
+            tagged_transaction,
+        };
+
+        let mut hasher = Sha256::new();
+        hasher.update(payload.to_xdr(Limits::none()).unwrap());
+        let result: [u8; 32] = hasher.finalize().into();
+        result
     }
 
     pub fn ledger_sequence(&self) -> u32 {
@@ -76,8 +104,9 @@ impl<'a> MetaReader<'a> {
         }
     }
 
-    pub fn envelopes_with_meta(&self) -> Vec<(&TransactionEnvelope, &TransactionResultMeta)> {
+    pub fn envelopes_with_meta(&self) -> Vec<(&TransactionEnvelope, TransactionResultMeta)> {
         let mut composed = Vec::new();
+        let processing = self.tx_processing();
 
         match &self.0 {
             LedgerCloseMeta::V0(_) => (), // todo
@@ -97,9 +126,30 @@ impl<'a> MetaReader<'a> {
                                         for (idx, tx_envelope) in
                                             txset_maybe_discounted_fee.txs.iter().enumerate()
                                         {
-                                            let txmeta = &v1.tx_processing[idx];
+                                            let tx = match tx_envelope {
+                                                TransactionEnvelope::Tx(v1) => v1.tx.clone(),
+                                                TransactionEnvelope::TxFeeBump(feebump) => {
+                                                    let FeeBumpTransactionInnerTx::Tx(v1) =
+                                                        feebump.tx.inner_tx.clone();
+                                                    v1.tx
+                                                }
+                                                _ => panic!(),
+                                            };
 
-                                            composed.push((tx_envelope, txmeta))
+                                            let txhash = self.txhash_by_transaction(tx);
+
+                                            let mut tprocessing = None;
+                                            for meta in processing.clone() {
+                                                if meta.result.transaction_hash.0 == txhash {
+                                                    tprocessing = Some(meta)
+                                                }
+                                            }
+                                            composed.push((
+                                                tx_envelope,
+                                                tprocessing
+                                                    .unwrap_or(processing[idx].clone())
+                                                    .clone(),
+                                            ))
                                         }
                                     }
                                 }
@@ -249,13 +299,13 @@ impl<'a> MetaReader<'a> {
 pub struct PrettyContractEvent {
     /// Event xdr that derived this object.
     pub raw: ContractEvent,
-    
+
     /// Contract address that emitted the event.
     pub contract: [u8; 32],
 
     /// Contract event topics.
     pub topics: VecM<ScVal>,
-    
+
     /// Contract event data
     pub data: ScVal,
 }
@@ -295,7 +345,7 @@ impl<'a> PrettyMetaReader<'a> {
 
     pub fn soroban_events_and_txhash(&self) -> Vec<(PrettyContractEvent, [u8; 32])> {
         let mut events = Vec::new();
-        
+
         for result in self.inner.tx_processing() {
             let txhash = result.result.transaction_hash.0;
 

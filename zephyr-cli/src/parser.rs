@@ -18,6 +18,9 @@ impl Config {
 pub struct Config {
     pub name: String,
 
+    /// Optionally set the project name.
+    pub project: Option<String>,
+
     /// Tables that the poject is writing or reading.
     pub tables: Option<Vec<Table>>,
 
@@ -101,7 +104,13 @@ impl ZephyrProjectParser {
             )
         };
 
-        if let Err(_) = self.client.deploy(path, true).await {
+        let project_name = if let Some(pname) = self.config.project.clone() {
+            pname
+        } else {
+            self.config.name.clone()
+        };
+
+        if let Err(_) = self.client.deploy(path, true, Some(project_name)).await {
             return Err(ParserError::WasmDeploymentError.into());
         };
 
@@ -117,6 +126,9 @@ mod test {
     pub fn sample_config() {
         let config = Config {
             name: "zephyr-soroban-op-ratio".into(),
+            project: None,
+            indexes: None,
+            dashboard: None,
             tables: Some(vec![Table {
                 name: "opratio".into(),
                 columns: vec![

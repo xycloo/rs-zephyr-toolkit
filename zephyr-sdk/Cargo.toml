@@ -1,6 +1,6 @@
 [package]
 name = "zephyr-sdk"
-version = "0.2.1"
+version = "0.2.2-rc1"
 edition = "2021"
 authors = ["Tommaso De Ponti @ xyclooLabs <tommaso@xycloo.com>"]
 description = "Rust SDK for building Zephyr programs."
@@ -30,10 +30,13 @@ serde_json = "1.0"
 stellar-strkey = "0.0.8"
 charming-fork-zephyr = "0.3.1"
 
-#zephyr = {package = "zephyr-vm", path = "../../zephyr/rs-zephyr-env", features = ["testutils"], optional = true}
-zephyr = { package = "zephyr-vm", version = "0.1.7", features = [
+zephyr = { package = "zephyr-vm", path = "../../zephyr/rs-zephyr-env", features = [
     "testutils",
 ], optional = true }
+
+#zephyr = { package = "zephyr-vm", version = "0.1.7", features = [
+#    "testutils",
+#], optional = true }
 
 ed25519-dalek = ">= 2.1.1"
 sha2 = "0.10.7"
