@@ -40,13 +40,22 @@ impl<'a> MetaReader<'a> {
         val.try_into().unwrap()
     }
 
-    pub fn txhash_by_transaction(&self, tx: Transaction) -> [u8; 32] {
+    pub fn txhash_by_transaction(&self, tx_envelope: &TransactionEnvelope) -> [u8; 32] {
         let network = self.newtork_id();
-        let tagged_transaction = TransactionSignaturePayloadTaggedTransaction::Tx(tx.clone());
+        let tagged = match tx_envelope {
+            TransactionEnvelope::Tx(v1) => {
+                let tx = v1.tx.clone();
+                TransactionSignaturePayloadTaggedTransaction::Tx(tx.clone())
+            }
+            TransactionEnvelope::TxFeeBump(feebump) => {
+                TransactionSignaturePayloadTaggedTransaction::TxFeeBump(feebump.tx.clone())
+            }
+            _ => panic!(),
+        };
 
         let payload = TransactionSignaturePayload {
             network_id: Hash(network),
-            tagged_transaction,
+            tagged_transaction: tagged,
         };
 
         let mut hasher = Sha256::new();
@@ -126,17 +135,7 @@ impl<'a> MetaReader<'a> {
                                         for (idx, tx_envelope) in
                                             txset_maybe_discounted_fee.txs.iter().enumerate()
                                         {
-                                            let tx = match tx_envelope {
-                                                TransactionEnvelope::Tx(v1) => v1.tx.clone(),
-                                                TransactionEnvelope::TxFeeBump(feebump) => {
-                                                    let FeeBumpTransactionInnerTx::Tx(v1) =
-                                                        feebump.tx.inner_tx.clone();
-                                                    v1.tx
-                                                }
-                                                _ => panic!(),
-                                            };
-
-                                            let txhash = self.txhash_by_transaction(tx);
+                                            let txhash = self.txhash_by_transaction(tx_envelope);
 
                                             let mut tprocessing = None;
                                             for meta in processing.clone() {
