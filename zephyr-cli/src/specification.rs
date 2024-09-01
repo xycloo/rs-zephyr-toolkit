@@ -26,7 +26,8 @@ impl ZephyrProjectParser {
                 let client = reqwest::Client::new();
                 client
                     .put(format!("{}/api/indexes", self.client.base_url))
-                    .bearer_auth(self.client.jwt.clone())
+                    .header("Authorization", self.client.get_auth())
+                    //.bearer_auth(self.client.jwt.clone())
                     .header("Content-Type", "application/json")
                     .body(serde_json::to_string(&index)?)
                     .send()
@@ -42,7 +43,8 @@ impl ZephyrProjectParser {
             let client = reqwest::Client::new();
             client
                 .put(format!("{}/api/dashboard", self.client.base_url))
-                .bearer_auth(self.client.jwt.clone())
+                .header("Authorization", self.client.get_auth())
+                //.bearer_auth(self.client.jwt.clone())
                 .header("Content-Type", "application/json")
                 .body(serde_json::to_string(&dashboard)?)
                 .send()

@@ -89,6 +89,16 @@ pub enum MercuryAccessKey {
     Key(String),
 }
 
+impl MercuryAccessKey {
+    pub fn from_jwt(jwt: &str) -> Self {
+        Self::Jwt(jwt.to_string())
+    }
+
+    pub fn from_key(key: &str) -> Self {
+        Self::Key(key.to_string())
+    }
+}
+
 pub struct MercuryClient {
     pub base_url: String,
     pub key: MercuryAccessKey,

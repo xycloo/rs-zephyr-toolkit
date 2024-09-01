@@ -1,6 +1,11 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use std::{fs::File, io::Read, path::Path, process::Command};
+use std::{
+    fs::File,
+    io::{BufRead, Read},
+    path::Path,
+    process::Command,
+};
 
 use crate::{
     error::ParserError,
@@ -66,18 +71,39 @@ impl ZephyrProjectParser {
     }
 
     pub fn build_wasm(&self) -> Result<()> {
-        let output = Command::new("cargo")
+        let mut child = Command::new("cargo")
             .args(&["build", "--release", "--target=wasm32-unknown-unknown"])
-            .output()?;
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()?;
 
-        if !output.status.success() {
-            let error = if !output.stdout.is_empty() {
-                String::from_utf8_lossy(&output.stdout).to_string()
-            } else {
-                String::new()
-            };
+        let stdout = child.stdout.take().unwrap();
+        let stderr = child.stderr.take().unwrap();
 
-            return Err(ParserError::WasmBuildError(error).into());
+        let stdout_thread = std::thread::spawn(move || {
+            let reader = std::io::BufReader::new(stdout);
+            for line in reader.lines() {
+                if let Ok(line) = line {
+                    println!("{}", line);
+                }
+            }
+        });
+
+        let stderr_thread = std::thread::spawn(move || {
+            let reader = std::io::BufReader::new(stderr);
+            for line in reader.lines() {
+                if let Ok(line) = line {
+                    eprintln!("{}", line);
+                }
+            }
+        });
+
+        let status = child.wait()?;
+        stdout_thread.join().unwrap();
+        stderr_thread.join().unwrap();
+
+        if !status.success() {
+            return Err(ParserError::WasmBuildError("Build failed".to_string()).into());
         }
 
         Ok(())

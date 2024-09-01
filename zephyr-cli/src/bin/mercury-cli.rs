@@ -4,7 +4,7 @@ use std::{
 };
 
 use clap::Parser;
-use mercury_cli::{Cli, Commands, MercuryClient, ZephyrProjectParser};
+use mercury_cli::{Cli, Commands, MercuryAccessKey, MercuryClient, ZephyrProjectParser};
 
 const BACKEND_ENDPOINT: &str = "https://api.mercurydata.app";
 const MAINNET_BACKEND_ENDPOINT: &str = "https://mainnet.mercurydata.app";
@@ -14,16 +14,24 @@ const LOCAL_BACKEND: &str = "http://127.0.0.1:8443";
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
+    let access_key = if let Some(jwt) = cli.jwt {
+        MercuryAccessKey::from_jwt(&jwt)
+    } else {
+        if let Some(key) = cli.key {
+            MercuryAccessKey::from_key(&key)
+        } else {
+            println!("No access key or jwt provided");
+            panic!();
+        }
+    };
+
     let client = if let Some(true) = cli.local {
-        MercuryClient::new(LOCAL_BACKEND.to_string(), cli.jwt.unwrap_or("".into()))
+        MercuryClient::new(LOCAL_BACKEND.to_string(), access_key)
     } else {
         if let Some(true) = cli.mainnet {
-            MercuryClient::new(
-                MAINNET_BACKEND_ENDPOINT.to_string(),
-                cli.jwt.unwrap_or("".into()),
-            )
+            MercuryClient::new(MAINNET_BACKEND_ENDPOINT.to_string(), access_key)
         } else {
-            MercuryClient::new(BACKEND_ENDPOINT.to_string(), cli.jwt.unwrap_or("".into()))
+            MercuryClient::new(BACKEND_ENDPOINT.to_string(), access_key)
         }
     };
 
