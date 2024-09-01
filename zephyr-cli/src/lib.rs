@@ -18,6 +18,9 @@ pub struct Cli {
     pub jwt: Option<String>,
 
     #[arg(short, long)]
+    pub key: Option<String>,
+
+    #[arg(short, long)]
     pub local: Option<bool>,
 
     #[arg(short, long)]
@@ -81,14 +84,26 @@ struct CodeUploadClient {
     project_name: Option<String>,
 }
 
+pub enum MercuryAccessKey {
+    Jwt(String),
+    Key(String),
+}
+
 pub struct MercuryClient {
     pub base_url: String,
-    pub jwt: String,
+    pub key: MercuryAccessKey,
 }
 
 impl MercuryClient {
-    pub fn new(base_url: String, jwt: String) -> Self {
-        Self { base_url, jwt }
+    pub fn new(base_url: String, key: MercuryAccessKey) -> Self {
+        Self { base_url, key }
+    }
+
+    pub fn get_auth(&self) -> String {
+        match &self.key {
+            MercuryAccessKey::Jwt(jwt) => format!("Bearer {}", &jwt),
+            MercuryAccessKey::Key(key) => key.to_string(),
+        }
     }
 
     pub async fn new_table(&self, table: Table) -> Result<(), Box<dyn std::error::Error>> {
@@ -109,7 +124,7 @@ impl MercuryClient {
 
         let json_code = serde_json::to_string(&code)?;
         let url = format!("{}/zephyr_table_new", &self.base_url);
-        let authorization = format!("Bearer {}", &self.jwt);
+        let authorization = self.get_auth();
 
         let client = reqwest::Client::new();
 
@@ -158,7 +173,7 @@ impl MercuryClient {
         let json_code = serde_json::to_string(&code)?;
 
         let url = format!("{}/zephyr_upload", &self.base_url);
-        let authorization = format!("Bearer {}", &self.jwt);
+        let authorization = self.get_auth();
 
         let client = reqwest::Client::new();
 
@@ -225,7 +240,7 @@ impl MercuryClient {
         let json_code = serde_json::to_string(&request)?;
 
         let url = format!("{}/zephyr/execute", &self.base_url);
-        let authorization = format!("Bearer {}", &self.jwt);
+        let authorization = self.get_auth();
 
         let client = reqwest::Client::new();
 

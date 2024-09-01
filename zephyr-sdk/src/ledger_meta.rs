@@ -113,7 +113,7 @@ impl<'a> MetaReader<'a> {
         }
     }
 
-    pub fn envelopes_with_meta(&self) -> Vec<(&TransactionEnvelope, TransactionResultMeta)> {
+    pub fn envelopes_with_meta(&self) -> Vec<(TransactionEnvelope, TransactionResultMeta)> {
         let mut composed = Vec::new();
         let processing = self.tx_processing();
 
@@ -144,7 +144,7 @@ impl<'a> MetaReader<'a> {
                                                 }
                                             }
                                             composed.push((
-                                                tx_envelope,
+                                                tx_envelope.clone(),
                                                 tprocessing
                                                     .unwrap_or(processing[idx].clone())
                                                     .clone(),

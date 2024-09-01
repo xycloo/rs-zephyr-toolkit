@@ -1,6 +1,6 @@
 [package]
 name = "mercury-cli"
-version = "0.1.8"
+version = "0.1.9-rc1"
 description = "Mercury CLI."
 license = "Apache-2.0"
 edition = "2021"
