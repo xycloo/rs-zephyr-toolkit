@@ -247,6 +247,9 @@ impl MercuryClient {
     }
 
     async fn catchup(&self, request: CatchupRequest) -> Result<(), Box<dyn std::error::Error>> {
+        println!("Subscribing to the requested contracts.");
+        self.contracts_subscribe(request.mode.clone()).await;
+
         let json_code = serde_json::to_string(&request)?;
 
         let url = format!("{}/zephyr/execute", &self.base_url);
@@ -277,6 +280,101 @@ impl MercuryClient {
         };
 
         Ok(())
+    }
+
+    async fn contracts_subscribe(&self, mode: ExecutionMode) {
+        let contracts = match mode {
+            ExecutionMode::EventCatchup(contracts) => contracts,
+            ExecutionMode::EventCatchupScoped(ScopedEventCatchup { contracts, .. }) => contracts,
+            _ => vec![], // should be unreachable anyways
+        };
+
+        let graphql_url = format!("{}/graphql", &self.base_url);
+        let authorization = self.get_auth();
+        let query = r#"
+            query {
+                allContractEventSubscriptions {
+                    edges {
+                        node {
+                            contractId
+                        }
+                    }
+                }
+            }
+        "#;
+
+        let client = reqwest::Client::new();
+
+        let existing_subscriptions: Result<Vec<String>, _> = client
+            .post(&graphql_url)
+            .header("Authorization", &authorization)
+            .header("Content-Type", "application/json")
+            .json(&serde_json::json!({
+                "query": query,
+            }))
+            .send()
+            .await
+            .unwrap()
+            .json::<serde_json::Value>()
+            .await
+            .map(|json| {
+                json["data"]["allContractEventSubscriptions"]["edges"]
+                    .as_array()
+                    .map(|edges| {
+                        edges
+                            .iter()
+                            .filter_map(|edge| {
+                                edge["node"]["contractId"].as_str().map(String::from)
+                            })
+                            .collect()
+                    })
+                    .unwrap_or_default()
+            });
+
+        let existing_subscriptions = match existing_subscriptions {
+            Ok(subs) => subs,
+            Err(e) => {
+                println!("Error fetching existing subscriptions: {}", e);
+                vec![]
+            }
+        };
+
+        for contract in contracts {
+            if existing_subscriptions.contains(&contract) {
+                println!("Already subscribed to events for contract: {}", contract);
+                continue;
+            }
+
+            let url = format!("{}/event", &self.base_url);
+            let body = serde_json::json!({ "contract_id": contract });
+
+            match client
+                .post(&url)
+                .header("Authorization", &authorization)
+                .json(&body)
+                .send()
+                .await
+            {
+                Ok(response) => {
+                    if response.status().is_success() {
+                        println!(
+                            "Successfully subscribed to events for contract: {}",
+                            contract
+                        );
+                    } else {
+                        println!(
+                            "Failed to subscribe to events for contract: {}. Status: {:?}",
+                            contract,
+                            response.status()
+                        );
+                    }
+                }
+                Err(e) => println!(
+                    "Error subscribing to events for contract {}: {}",
+                    contract, e
+                ),
+            }
+        }
     }
 }
 
