@@ -43,10 +43,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }) => {
             if let Some(true) = old_api {
                 println!("Deploying wasm ...");
-                client
-                    .deploy(target.unwrap(), force.unwrap_or(false), None)
-                    .await
-                    .unwrap();
+                client.deploy(target.unwrap(), None).await.unwrap();
                 println!("Successfully deployed Zephyr program.");
             } else {
                 println!("Parsing project configuration ...");
@@ -54,7 +51,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Building binary ...");
                 parser.build_wasm().unwrap();
                 println!("Deploying tables ...");
-                parser.deploy_tables().await.unwrap();
+                parser.deploy_tables(force.unwrap_or(false)).await.unwrap();
                 println!("Registering indexes (if any) ...");
                 parser.register_indexes().await.unwrap();
                 println!("Registering dashboard (if any) ...");

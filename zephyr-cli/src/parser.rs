@@ -40,6 +40,7 @@ pub struct Config {
 pub struct Table {
     pub name: String,
     pub columns: Vec<Column>,
+    pub force: Option<bool>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -109,9 +110,9 @@ impl ZephyrProjectParser {
         Ok(())
     }
 
-    pub async fn deploy_tables(&self) -> Result<()> {
+    pub async fn deploy_tables(&self, force: bool) -> Result<()> {
         for table in self.config.tables() {
-            if let Err(_) = self.client.new_table(table).await {
+            if let Err(_) = self.client.new_table(table, force).await {
                 return Err(ParserError::TableCreationError.into());
             };
         }
@@ -136,7 +137,7 @@ impl ZephyrProjectParser {
             self.config.name.clone()
         };
 
-        if let Err(_) = self.client.deploy(path, true, Some(project_name)).await {
+        if let Err(_) = self.client.deploy(path, Some(project_name)).await {
             return Err(ParserError::WasmDeploymentError.into());
         };
 

@@ -75,6 +75,7 @@ pub enum Commands {
 struct NewZephyrTableClient {
     table: Option<String>,
     columns: Option<Vec<Column>>,
+    force: bool,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -116,7 +117,11 @@ impl MercuryClient {
         }
     }
 
-    pub async fn new_table(&self, table: Table) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn new_table(
+        &self,
+        table: Table,
+        force: bool,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let columns = table.columns;
         let mut cols = Vec::new();
 
@@ -130,6 +135,15 @@ impl MercuryClient {
         let code = NewZephyrTableClient {
             table: Some(table.name),
             columns: Some(cols),
+            force: if force {
+                force
+            } else {
+                if let Some(force) = table.force {
+                    force
+                } else {
+                    false
+                }
+            },
         };
 
         let json_code = serde_json::to_string(&code)?;
@@ -154,8 +168,9 @@ impl MercuryClient {
             );
         } else {
             println!(
-                "[-] Request failed with status code: {:?}",
-                response.status()
+                "[-] Request failed with status code: {:?}, Error: {}",
+                response.status(),
+                response.text().await.unwrap()
             );
         };
 
@@ -165,7 +180,7 @@ impl MercuryClient {
     pub async fn deploy(
         &self,
         wasm: String,
-        force_replace: bool,
+        //        force_replace: bool,
         project_name: Option<String>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         println!("Reading wasm {}", wasm);
@@ -177,7 +192,7 @@ impl MercuryClient {
 
         let code = CodeUploadClient {
             code: Some(buffer),
-            force_replace: Some(force_replace),
+            force_replace: Some(true),
             project_name,
         };
         let json_code = serde_json::to_string(&code)?;
