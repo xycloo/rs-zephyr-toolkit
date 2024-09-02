@@ -47,6 +47,8 @@ pub struct Table {
 pub struct Column {
     pub name: String,
     pub col_type: String,
+    pub primary: Option<bool>,
+    pub index: Option<bool>,
 }
 
 pub struct ZephyrProjectParser {

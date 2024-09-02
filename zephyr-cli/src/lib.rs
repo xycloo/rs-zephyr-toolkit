@@ -129,6 +129,8 @@ impl MercuryClient {
             cols.push(Column {
                 name: col.name.to_string(),
                 col_type: col.col_type.to_string(),
+                primary: col.primary.clone(),
+                index: col.index.clone(),
             });
         }
 
