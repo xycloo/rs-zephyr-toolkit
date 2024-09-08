@@ -76,6 +76,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             topic3s,
             topic4s,
             start,
+            project_name,
         }) => {
             println!("[+] You're performing a data catchup, make sure you are subscribed to the contracts you're running the catchup with. Check out https://docs.mercurydata.app/zephyr-full-customization/learn/get-started-set-up-and-manage-the-project/data-catchups-backfill for more info.\n");
 
@@ -88,6 +89,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         topic3s.unwrap_or(vec![]),
                         topic4s.unwrap_or(vec![]),
                         start,
+                        project_name,
                     )
                     .await
             } else {
@@ -99,6 +101,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         topic3s.unwrap_or(vec![]),
                         topic4s.unwrap_or(vec![]),
                         0,
+                        project_name,
                     )
                     .await
             };

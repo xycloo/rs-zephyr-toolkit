@@ -47,6 +47,9 @@ pub enum Commands {
 
     Catchup {
         #[arg(short, long)]
+        project_name: Option<String>,
+
+        #[arg(short, long)]
         contracts: Vec<String>,
 
         #[arg(short, long)]
@@ -228,9 +231,11 @@ impl MercuryClient {
     pub async fn catchup_standard(
         &self,
         contracts: Vec<String>,
+        project_name: Option<String>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let request = CatchupRequest {
             mode: ExecutionMode::EventCatchup(contracts),
+            project_name,
         };
 
         self.catchup(request).await?;
@@ -246,6 +251,7 @@ impl MercuryClient {
         topic3s: Vec<String>,
         topic4s: Vec<String>,
         start: i64,
+        project_name: Option<String>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let request = CatchupRequest {
             mode: ExecutionMode::EventCatchupScoped(ScopedEventCatchup {
@@ -256,6 +262,7 @@ impl MercuryClient {
                 topic4s,
                 start,
             }),
+            project_name,
         };
 
         self.catchup(request).await?;
@@ -421,4 +428,5 @@ pub enum ExecutionMode {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CatchupRequest {
     mode: ExecutionMode,
+    project_name: Option<String>,
 }
