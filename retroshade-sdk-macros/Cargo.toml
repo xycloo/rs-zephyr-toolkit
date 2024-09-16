@@ -3,10 +3,10 @@ name = "retroshade-sdk-macros"
 version = "0.1.0"
 edition = "2021"
 authors = ["Tommaso De Ponti @ xyclooLabs <tommaso@xycloo.com>"]
-description = "Rust SDK for building Zephyr programs."
+description = "Macros to generate Retroshade events implementations."
 documentation = "https://docs.mercurydata.app/"
 homepage = "https://mercurydata.app/zephyr-vm/"
-keywords = ["wasm", "sdk", "blockchain"]
+keywords = ["wasm", "sdk", "blockchain", "soroban"]
 license = "Apache-2.0"
 
 [dependencies]
