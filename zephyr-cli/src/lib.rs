@@ -105,6 +105,7 @@ struct CodeUploadClient {
 pub enum MercuryAccessKey {
     Jwt(String),
     Key(String),
+    None,
 }
 
 impl MercuryAccessKey {
@@ -131,6 +132,7 @@ impl MercuryClient {
         match &self.key {
             MercuryAccessKey::Jwt(jwt) => format!("Bearer {}", &jwt),
             MercuryAccessKey::Key(key) => key.to_string(),
+            MercuryAccessKey::None => panic!("Invalid CLI configuration. Set auth required."),
         }
     }
 

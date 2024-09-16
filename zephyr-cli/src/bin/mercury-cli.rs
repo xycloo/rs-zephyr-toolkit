@@ -20,8 +20,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         if let Some(key) = cli.key {
             MercuryAccessKey::from_key(&key)
         } else {
-            println!("No access key or jwt provided");
-            panic!();
+            println!("Note: no access key or jwt provided");
+            MercuryAccessKey::None
         }
     };
 
