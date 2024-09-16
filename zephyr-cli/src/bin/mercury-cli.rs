@@ -36,6 +36,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     match cli.command {
+        Some(Commands::Retroshade {
+            target,
+            project,
+            contracts,
+        }) => {
+            println!("Deploying retroshade contract ...");
+            let deployed = client.deploy(target, Some(project), Some(contracts)).await;
+            if let Ok(_) = deployed {
+                println!("Succesfully deployed.");
+            } else {
+                println!("Couldn't deploy: {:?}.", deployed.err().unwrap());
+            }
+        }
         Some(Commands::Deploy {
             target,
             old_api,
@@ -43,7 +56,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }) => {
             if let Some(true) = old_api {
                 println!("Deploying wasm ...");
-                client.deploy(target.unwrap(), None).await.unwrap();
+                client.deploy(target.unwrap(), None, None).await.unwrap();
                 println!("Successfully deployed Zephyr program.");
             } else {
                 println!("Parsing project configuration ...");

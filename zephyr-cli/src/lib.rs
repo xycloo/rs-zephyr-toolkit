@@ -1,5 +1,6 @@
 use parser::{Column, Table};
 use serde::{Deserialize, Serialize};
+
 use std::fs::File;
 use std::io::Read;
 
@@ -41,6 +42,17 @@ pub enum Commands {
 
         #[arg(short, long)]
         force: Option<bool>,
+    },
+
+    Retroshade {
+        #[arg(short, long)]
+        target: String,
+
+        #[arg(short, long)]
+        project: String,
+
+        #[arg(short, long)]
+        contracts: Vec<String>,
     },
 
     Build,
@@ -86,6 +98,8 @@ struct CodeUploadClient {
     code: Option<Vec<u8>>,
     force_replace: Option<bool>,
     project_name: Option<String>,
+    contract: Option<bool>,
+    contracts: Option<Vec<String>>,
 }
 
 pub enum MercuryAccessKey {
@@ -187,18 +201,29 @@ impl MercuryClient {
         wasm: String,
         //        force_replace: bool,
         project_name: Option<String>,
+        contracts: Option<Vec<String>>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         println!("Reading wasm {}", wasm);
         let mut input_file = File::open(wasm)?;
 
         let mut buffer = Vec::new();
         input_file.read_to_end(&mut buffer)?;
-        println!("(Size of program is {})", buffer.len());
+        println!(
+            "(Size of program is {}, wasm hash: {})",
+            buffer.len(),
+            hex::encode(md5::compute(&buffer).0)
+        );
 
         let code = CodeUploadClient {
             code: Some(buffer),
             force_replace: Some(true),
             project_name,
+            contract: if contracts.is_some() {
+                Some(true)
+            } else {
+                None
+            },
+            contracts,
         };
         let json_code = serde_json::to_string(&code)?;
 

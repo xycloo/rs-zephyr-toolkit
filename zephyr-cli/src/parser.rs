@@ -139,7 +139,7 @@ impl ZephyrProjectParser {
             self.config.name.clone()
         };
 
-        if let Err(_) = self.client.deploy(path, Some(project_name)).await {
+        if let Err(_) = self.client.deploy(path, Some(project_name), None).await {
             return Err(ParserError::WasmDeploymentError.into());
         };
 

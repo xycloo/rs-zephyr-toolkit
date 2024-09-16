@@ -1,0 +1,16 @@
+[package]
+name = "retroshade-sdk"
+version = "0.1.0"
+edition = "2021"
+authors = ["Tommaso De Ponti @ xyclooLabs <tommaso@xycloo.com>"]
+description = "Rust SDK for building Zephyr programs."
+documentation = "https://docs.mercurydata.app/"
+homepage = "https://mercurydata.app/zephyr-vm/"
+keywords = ["wasm", "sdk", "blockchain"]
+license = "Apache-2.0"
+
+[dependencies]
+retroshade-sdk-macros = { path = "../retroshade-sdk-macros" }
+
+[dev-dependencies]
+soroban-sdk = "21.6.0"
