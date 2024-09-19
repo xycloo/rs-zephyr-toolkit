@@ -10,7 +10,7 @@ keywords = ["wasm", "sdk", "blockchain", "soroban"]
 license = "Apache-2.0"
 
 [dependencies]
-retroshade-sdk-macros = { path = "../retroshade-sdk-macros" }
+retroshade-sdk-macros = { version = "0.1.0", path = "../retroshade-sdk-macros" }
 
 [dev-dependencies]
 soroban-sdk = "21.6.0"
