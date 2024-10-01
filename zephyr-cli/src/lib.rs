@@ -59,6 +59,12 @@ pub enum Commands {
 
     Catchup {
         #[arg(short, long)]
+        retroshades: Option<bool>,
+
+        #[arg(short, long)]
+        functions: Option<Vec<String>>,
+
+        #[arg(short, long)]
         project_name: Option<String>,
 
         #[arg(short, long)]
@@ -265,8 +271,26 @@ impl MercuryClient {
             project_name,
         };
 
-        self.catchup(request).await?;
+        self.catchup(request, false).await?;
 
+        Ok(())
+    }
+
+    pub async fn retroshades_catchup(
+        &self,
+        fnames: Option<Vec<String>>,
+        start: Option<i64>,
+        project_name: Option<String>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let request = CatchupRequest {
+            mode: ExecutionMode::RetroshadesCatchup(RetroshadesCatchupMode {
+                fnames: fnames.unwrap_or(vec![]),
+                start_at: start.unwrap_or(0),
+            }),
+            project_name,
+        };
+
+        self.catchup(request, true).await?;
         Ok(())
     }
 
@@ -292,14 +316,20 @@ impl MercuryClient {
             project_name,
         };
 
-        self.catchup(request).await?;
+        self.catchup(request, false).await?;
 
         Ok(())
     }
 
-    async fn catchup(&self, request: CatchupRequest) -> Result<(), Box<dyn std::error::Error>> {
-        println!("Subscribing to the requested contracts.");
-        self.contracts_subscribe(request.mode.clone()).await;
+    async fn catchup(
+        &self,
+        request: CatchupRequest,
+        retroshades: bool,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        if !retroshades {
+            println!("Subscribing to the requested contracts.");
+            self.contracts_subscribe(request.mode.clone()).await;
+        }
 
         let json_code = serde_json::to_string(&request)?;
 
@@ -450,6 +480,13 @@ pub enum ExecutionMode {
     EventCatchup(Vec<String>),
     EventCatchupScoped(ScopedEventCatchup),
     Function(InvokeZephyrFunction),
+    RetroshadesCatchup(RetroshadesCatchupMode),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct RetroshadesCatchupMode {
+    pub fnames: Vec<String>,
+    pub start_at: i64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

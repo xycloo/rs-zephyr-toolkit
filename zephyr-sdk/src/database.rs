@@ -35,6 +35,8 @@ pub struct TableRows {
 pub enum Condition {
     /// A given column is equal to a certain object.
     ColumnEqualTo(String, Vec<u8>),
+    ColumnGt(String, Vec<u8>),
+    ColumnLt(String, Vec<u8>),
 }
 
 /// Wraps a single row.
@@ -92,6 +94,8 @@ impl Database {
                 for cond in conditions {
                     let (colname, operator, value) = match cond {
                         Condition::ColumnEqualTo(colname, value) => (colname, 0, value),
+                        Condition::ColumnGt(colname, value) => (colname, 1, value),
+                        Condition::ColumnLt(colname, value) => (colname, 2, value),
                     };
 
                     env_push_stack(
@@ -187,6 +191,8 @@ impl Database {
             for cond in conditions {
                 let (colname, operator, value) = match cond {
                     Condition::ColumnEqualTo(colname, value) => (colname, 0, value),
+                    Condition::ColumnGt(colname, value) => (colname, 1, value),
+                    Condition::ColumnLt(colname, value) => (colname, 2, value),
                 };
 
                 env_push_stack(
@@ -257,9 +263,9 @@ impl TableQueryWrapper {
 
     /// Adds a new condition in the update according to which a given column
     /// should be equal to the matching object.
-    /// 
+    ///
     /// Under the hood, the object is converted to a ZephyrVal and is later
-    /// serialized. 
+    /// serialized.
     pub fn column_equal_to<T: Serialize + TryInto<ZephyrVal>>(
         &mut self,
         column: impl ToString,
@@ -272,6 +278,94 @@ impl TableQueryWrapper {
         )
         .unwrap();
         let condition = Condition::ColumnEqualTo(column.to_string(), argument);
+        self.conditions.push(condition);
+
+        self
+    }
+
+    /// Adds a new condition in the update according to which a given column
+    /// should be greater than an XDR object.
+    pub fn column_gt_xdr(&mut self, column: impl ToString, xdr: &impl WriteXdr) -> &mut Self {
+        let bytes = xdr.to_xdr(Limits::none()).unwrap();
+        let condition = Condition::ColumnGt(column.to_string(), bytes);
+        self.conditions.push(condition);
+
+        self
+    }
+
+    /// Adds a new condition in the update according to which a given column
+    /// should be greater than the matching bytes array.
+    ///
+    /// This filter should be used when dealing with non-XDR types. Serialization
+    /// must be carried by the implementor.
+    pub fn column_gt_bytes(&mut self, column: impl ToString, bytes: &[u8]) -> &mut Self {
+        let condition = Condition::ColumnGt(column.to_string(), bytes.to_vec());
+        self.conditions.push(condition);
+
+        self
+    }
+
+    /// Adds a new condition in the update according to which a given column
+    /// should be greater than the matching object.
+    ///
+    /// Under the hood, the object is converted to a ZephyrVal and is later
+    /// serialized.
+    pub fn column_gt<T: Serialize + TryInto<ZephyrVal>>(
+        &mut self,
+        column: impl ToString,
+        argument: T,
+    ) -> &mut Self {
+        let argument = bincode::serialize(
+            &TryInto::<ZephyrVal>::try_into(argument)
+                .map_err(|_| ())
+                .unwrap(),
+        )
+        .unwrap();
+        let condition = Condition::ColumnGt(column.to_string(), argument);
+        self.conditions.push(condition);
+
+        self
+    }
+
+    /// Adds a new condition in the update according to which a given column
+    /// should be less than an XDR object.
+    pub fn column_lt_xdr(&mut self, column: impl ToString, xdr: &impl WriteXdr) -> &mut Self {
+        let bytes = xdr.to_xdr(Limits::none()).unwrap();
+        let condition = Condition::ColumnLt(column.to_string(), bytes);
+        self.conditions.push(condition);
+
+        self
+    }
+
+    /// Adds a new condition in the update according to which a given column
+    /// should be less than the matching bytes array.
+    ///
+    /// This filter should be used when dealing with non-XDR types. Serialization
+    /// must be carried by the implementor.
+    pub fn column_lt_bytes(&mut self, column: impl ToString, bytes: &[u8]) -> &mut Self {
+        let condition = Condition::ColumnLt(column.to_string(), bytes.to_vec());
+        self.conditions.push(condition);
+
+        self
+    }
+
+    /// Adds a new condition in the update according to which a given column
+    /// should be less than the matching object.
+    ///
+    /// Under the hood, the object is converted to a ZephyrVal and is later
+    /// serialized.
+    pub fn column_lt<T: Serialize + TryInto<ZephyrVal>>(
+        &mut self,
+        column: impl ToString,
+        argument: T,
+    ) -> &mut Self {
+        let argument = bincode::serialize(
+            &TryInto::<ZephyrVal>::try_into(argument)
+                .map_err(|_| ())
+                .unwrap(),
+        )
+        .unwrap();
+        let condition = Condition::ColumnLt(column.to_string(), argument);
         self.conditions.push(condition);
 
         self

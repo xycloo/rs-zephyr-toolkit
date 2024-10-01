@@ -1,6 +1,6 @@
 [package]
 name = "zephyr-sdk"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2021"
 authors = ["Tommaso De Ponti @ xyclooLabs <tommaso@xycloo.com>"]
 description = "Rust SDK for building Zephyr programs."
@@ -34,7 +34,7 @@ charming-fork-zephyr = "0.3.1"
 #    "testutils",
 #], optional = true }
 
-zephyr = { package = "zephyr-vm", version = "0.2.0", features = [
+zephyr = { package = "zephyr-vm", version = "0.2.1", features = [
     "testutils",
 ], optional = true }
 
