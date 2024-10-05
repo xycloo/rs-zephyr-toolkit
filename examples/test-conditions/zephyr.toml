@@ -1,1 +1,12 @@
-name = "test-program"
+name = "test-conditions"
+
+[[tables]]
+name = "events"
+
+[[tables.columns]]
+name = "idx"
+col_type = "BIGINT"
+
+[[tables.columns]]
+name = "value"
+col_type = "BIGINT"

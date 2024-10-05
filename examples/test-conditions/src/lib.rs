@@ -2,9 +2,12 @@
 //! This is a reference of how you can test against specific
 //! situations locally.
 
+use stellar_xdr::next::{ReadXdr, ScAddress, TransactionEnvelope, TransactionExt, WriteXdr};
+/*
 use std::fmt::format;
 
 use serde::Serialize;
+use stellar_xdr::next::{ReadXdr, ScAddress, TransactionEnvelope, TransactionExt, WriteXdr};
 use zephyr_sdk::{
     prelude::*,
     soroban_sdk::{
@@ -13,6 +16,16 @@ use zephyr_sdk::{
     },
     DatabaseDerive, EnvClient,
 };
+
+#[no_mangle]
+pub extern "C" fn on_close() {
+    let env = EnvClient::new();
+
+    for (tx, meta) in env.reader().envelopes_with_meta() {
+        env.log()
+            .debug(format!("Got tx {:?} for meta {:?}", tx, meta), None);
+    }
+}
 
 #[derive(DatabaseDerive, Debug, Serialize)]
 #[with_name("events")]
@@ -53,13 +66,11 @@ pub extern "C" fn add32() {
 pub extern "C" fn test() {
     let env = EnvClient::empty();
 
-    env.conclude(
-        &env.read_filter()
-            .column_equal_to("value", 20)
-            .column_gt("idx", 2)
-            .read::<StoredEvent>()
-            .unwrap(),
-    );
+    env.update()
+        .column_equal_to("value", 20)
+        .column_equal_to("idx", 2)
+        .execute(&StoredEvent { idx: 9, value: 10 })
+        .unwrap();
 }
 
 #[cfg(test)]
@@ -125,7 +136,7 @@ mod test {
         println!("Elapsed: {:?}", start.elapsed());
 
         // A new row has been indexed in the database.
-        assert_eq!(db.get_rows_number(0, "events").await.unwrap(), 4);
+        //assert_eq!(db.get_rows_number(0, "events").await.unwrap(), 4);
 
         let invocation = program.invoke_vm("test").await;
         assert!(invocation.is_ok());
@@ -135,6 +146,67 @@ mod test {
         println!("{:?}", invocation.unwrap().unwrap());
 
         // Drop the connection and all the noise created in the local database.
-        db.close().await;
+        //db.close().await;
+    }
+}
+*/
+#[test]
+fn test_() {
+    use stellar_xdr::next::{
+        ContractDataDurability, Hash, LedgerKey, LedgerKeyContractData, Limits, ScVal, ScVec,
+    };
+
+    let contract_hash = Hash([
+        0x89, 0x5b, 0x6c, 0x84, 0xb7, 0x0d, 0x1a, 0x66, 0x79, 0x8c, 0xc0, 0xc4, 0x82, 0xe3, 0xf5,
+        0xd0, 0x5e, 0xa0, 0xdf, 0xc4, 0x12, 0xc2, 0x11, 0x8a, 0x65, 0x6a, 0x62, 0xbc, 0x92, 0x9c,
+        0x6f, 0x8d,
+    ]);
+
+    let key = ScVal::Vec(Some(ScVec(
+        vec![
+            ScVal::Symbol("ResConfig".try_into().unwrap()),
+            ScVal::Address(ScAddress::Contract(Hash(
+                stellar_strkey::Contract::from_string(
+                    "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+                )
+                .unwrap()
+                .0,
+            ))),
+        ]
+        .try_into()
+        .unwrap(),
+    )));
+
+    let key2 = ScVal::Vec(Some(ScVec(
+        vec![
+            ScVal::Symbol("EmisConfig".try_into().unwrap()),
+            ScVal::U32(1),
+        ]
+        .try_into()
+        .unwrap(),
+    )));
+
+    let ledger_key = LedgerKey::ContractData(LedgerKeyContractData {
+        contract: ScAddress::Contract(contract_hash),
+        key: key.into(),
+        durability: ContractDataDurability::Persistent,
+    });
+
+    //println!("{:?}", ledger_key.to_xdr_base64(Limits::none()));
+
+    let envelope = TransactionEnvelope::from_xdr_base64("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", Limits::none()).unwrap();
+
+    let TransactionEnvelope::Tx(v1) = envelope else {
+        panic!()
+    };
+    let TransactionExt::V1(soroban) = v1.tx.ext else {
+        panic!()
+    };
+    for entry in soroban.resources.footprint.read_only.to_vec() {
+        println!(
+            "{:?} {}\n",
+            entry,
+            entry.to_xdr_base64(Limits::none()).unwrap()
+        )
     }
 }

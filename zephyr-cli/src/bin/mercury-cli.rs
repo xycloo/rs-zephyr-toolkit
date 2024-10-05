@@ -204,7 +204,7 @@ pub extern "C" fn on_close() {
                 .append(true)
                 .open(format!("{}/Cargo.toml", name))?;
             cargo_toml.write(
-                r#"zephyr-sdk = { version = "0.1.7" }
+                r#"zephyr-sdk = { version = "0.2.4" }
 
 [lib]
 crate-type = ["cdylib"]
