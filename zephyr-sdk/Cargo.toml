@@ -38,11 +38,11 @@ zephyr = { package = "zephyr-vm", path = "../../zephyr/rs-zephyr-env", features 
 #    "testutils",
 #], optional = true }
 
-ed25519-dalek = ">= 2.1.1"
+ed25519-dalek = "2.1.1"
 sha2 = "0.10.7"
 
 [dependencies.soroban-sdk]
-version = "21.5.0"
+version = "=21.7.0"
 #path = "../../rs-soroban-sdk/soroban-sdk"
 features = ["alloc"]
 
