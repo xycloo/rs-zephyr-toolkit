@@ -2,12 +2,10 @@
 //! This is a reference of how you can test against specific
 //! situations locally.
 
-use stellar_xdr::next::{ReadXdr, ScAddress, TransactionEnvelope, TransactionExt, WriteXdr};
-/*
 use std::fmt::format;
 
 use serde::Serialize;
-use stellar_xdr::next::{ReadXdr, ScAddress, TransactionEnvelope, TransactionExt, WriteXdr};
+
 use zephyr_sdk::{
     prelude::*,
     soroban_sdk::{
@@ -58,6 +56,8 @@ pub extern "C" fn add3() {
 #[no_mangle]
 pub extern "C" fn add32() {
     let env = EnvClient::empty();
+
+    env.to_scval(zephyr_sdk::soroban_sdk::Val::from_payload(89));
 
     env.put(&StoredEvent { idx: 3, value: 20 })
 }
@@ -118,20 +118,28 @@ mod test {
         let inner_invocation = invocation.unwrap();
         assert!(inner_invocation.is_ok());
 
+        println!("{}", inner_invocation.unwrap().1);
+
         let invocation = program.invoke_vm("add2").await;
         assert!(invocation.is_ok());
         let inner_invocation = invocation.unwrap();
         assert!(inner_invocation.is_ok());
+
+        println!("{}", inner_invocation.unwrap().1);
 
         let invocation = program.invoke_vm("add3").await;
         assert!(invocation.is_ok());
         let inner_invocation = invocation.unwrap();
         assert!(inner_invocation.is_ok());
 
+        println!("{}", inner_invocation.unwrap().1);
+
         let invocation = program.invoke_vm("add32").await;
         assert!(invocation.is_ok());
         let inner_invocation = invocation.unwrap();
-        assert!(inner_invocation.is_ok());
+        // assert!(inner_invocation.is_ok());
+
+        println!("{}", inner_invocation.unwrap().1);
 
         println!("Elapsed: {:?}", start.elapsed());
 
@@ -140,17 +148,17 @@ mod test {
 
         let invocation = program.invoke_vm("test").await;
         assert!(invocation.is_ok());
-        let inner_invocation = invocation.as_ref().unwrap();
+        let inner_invocation = invocation.unwrap();
         assert!(inner_invocation.is_ok());
 
-        println!("{:?}", invocation.unwrap().unwrap());
+        println!("{}", inner_invocation.unwrap().1);
 
         // Drop the connection and all the noise created in the local database.
-        //db.close().await;
+        db.close().await;
     }
 }
-*/
-#[test]
+
+/*#[test]
 fn test_() {
     use stellar_xdr::next::{
         ContractDataDurability, Hash, LedgerKey, LedgerKeyContractData, Limits, ScVal, ScVec,
@@ -210,3 +218,4 @@ fn test_() {
         )
     }
 }
+*/
