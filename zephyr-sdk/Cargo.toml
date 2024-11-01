@@ -53,6 +53,9 @@ version = "=21.7.0"
 #path = "../../rs-soroban-sdk/soroban-sdk"
 features = ["alloc"]
 
+[patch.crates-io]
+futures-util = { git = "https://github.com/rust-lang/futures-rs", rev = "de1a0fd" }
+
 [features]
 default = []
 testutils = ["dep:zephyr"]
