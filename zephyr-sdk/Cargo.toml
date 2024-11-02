@@ -1,6 +1,6 @@
 [package]
 name = "zephyr-sdk"
-version = "0.2.4"
+version = "0.2.5"
 edition = "2021"
 authors = ["Tommaso De Ponti @ xyclooLabs <tommaso@xycloo.com>"]
 description = "Rust SDK for building Zephyr programs."
@@ -20,42 +20,21 @@ bincode = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "1.0.49"
 
-# rs-zephyr-common = { version = "0.1.6" }
-#rs-zephyr-common = { path = "../zephyr-common" }
-rs-zephyr-common = {git = "https://github.com/xycloo/rs-zephyr-toolkit", branch="stellar-main-2"}
+rs-zephyr-common = { version = "0.1.6" }
+# rs-zephyr-common = {git = "https://github.com/xycloo/rs-zephyr-toolkit", branch="stellar-main-2"}
 
-macros = { package = "zephyr-macros", git = "https://github.com/xycloo/rs-zephyr-toolkit", branch="stellar-main-2" }
-#macros = { package = "zephyr-macros", version = "0.1.1" }
-#macros = { package = "zephyr-macros", path = "../macros" }
+macros = { package = "zephyr-macros", version = "0.1.1" }
 
 serde_json = "1.0"
 stellar-strkey = "0.0.8"
 charming-fork-zephyr = "0.3.1"
 
-#zephyr = { package = "zephyr-vm", path = "../../zephyr/rs-zephyr-env", features = [
-#    "testutils",
-#], optional = true }
-
-#zephyr = { package = "zephyr-vm", version = "0.2.1", features = [
-#    "testutils",
-#], optional = true }
-
-zephyr = { package = "zephyr-vm", git = "https://github.com/xycloo/zephyr", branch="add-traces", features = [
-    "testutils",
-], optional = true }
-
-
 ed25519-dalek = "2.1.1"
 sha2 = "0.10.7"
 
 [dependencies.soroban-sdk]
-version = "=21.7.0"
-#path = "../../rs-soroban-sdk/soroban-sdk"
+version = "21.7.6"
 features = ["alloc"]
-
-[patch.crates-io]
-futures-util = { git = "https://github.com/rust-lang/futures-rs", rev = "de1a0fd" }
 
 [features]
 default = []
-testutils = ["dep:zephyr"]
