@@ -57,6 +57,9 @@ pub mod utils;
 
 pub mod prelude;
 
+#[cfg(feature="protocols")]
+pub mod protocols;
+
 use rs_zephyr_common::ZephyrStatus;
 use serde::Deserialize;
 use serde::Serialize;

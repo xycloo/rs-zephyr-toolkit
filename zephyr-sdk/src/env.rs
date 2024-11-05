@@ -364,12 +364,8 @@ impl EnvClient {
                 resource_fee: simulation.transaction_data.as_ref().unwrap().resource_fee,
             }),
         };
-        let envelope = TransactionEnvelope::Tx(TransactionV1Envelope {
-            tx,
-            signatures: std::vec::Vec::new().try_into().unwrap(),
-        });
 
-        response.tx = Some(envelope.to_xdr_base64(Limits::none()).unwrap());
+        response.tx = Some(tx.to_xdr_base64(Limits::none()).unwrap());
 
         Ok(response)
     }
@@ -402,7 +398,7 @@ impl EnvClient {
         let slice = unsafe { core::slice::from_raw_parts(memory, inbound_size as usize) };
         let deser = bincode::deserialize::<InvokeHostFunctionSimulationResult>(slice)
             .map_err(|_| SdkError::Conversion)?;
-
+        
         Ok(deser)
     }
 }
