@@ -6,6 +6,7 @@ authors = ["Tommaso De Ponti @ xyclooLabs <tommaso@xycloo.com>"]
 description = "Rust SDK for building Zephyr programs."
 documentation = "https://docs.mercurydata.app/"
 homepage = "https://mercurydata.app/zephyr-vm/"
+repository = "https://github.com/xycloo/rs-zephyr-toolkit"
 keywords = ["wasm", "sdk", "blockchain"]
 license = "Apache-2.0"
 
