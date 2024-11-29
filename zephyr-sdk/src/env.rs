@@ -398,7 +398,7 @@ impl EnvClient {
         let slice = unsafe { core::slice::from_raw_parts(memory, inbound_size as usize) };
         let deser = bincode::deserialize::<InvokeHostFunctionSimulationResult>(slice)
             .map_err(|_| SdkError::Conversion)?;
-        
+
         Ok(deser)
     }
 }
@@ -507,7 +507,7 @@ impl InvokeHostFunctionSimulationResult {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct TransactionResponse {
     pub tx: Option<String>,
     pub error: Option<String>,

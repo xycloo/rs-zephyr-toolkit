@@ -8,20 +8,29 @@ use crate::{utils::address_from_str, EnvClient};
 pub const SCALAR_9: i128 = 1_000_000_000;
 pub const SCALAR_7: i128 = 1_0000000;
 
-
 #[derive(Serialize, Deserialize, Debug)]
-pub struct BlendHfResponse {
+pub struct HfResponse {
     pub min: i64,
     pub current: i64,
 }
 
 pub mod storage {
+    use super::*;
+    use crate::EnvClient;
     use soroban_sdk::{contracttype, Map, Vec};
     use soroban_sdk::{
-        xdr::{ContractDataEntry, LedgerEntryData, ScContractInstance, ScVal}, Address, Symbol, TryFromVal
+        xdr::{ContractDataEntry, LedgerEntryData, ScContractInstance, ScVal},
+        Address, Symbol, TryFromVal,
     };
-    use crate::EnvClient;
-    use super::*;
+
+    pub const IS_INIT_KEY: &str = "IsInit";
+    pub const ADMIN_KEY: &str = "Admin";
+    pub const NAME_KEY: &str = "Name";
+    pub const BACKSTOP_KEY: &str = "Backstop";
+    pub const BLND_TOKEN_KEY: &str = "BLNDTkn";
+    pub const POOL_CONFIG_KEY: &str = "Config";
+    pub const RES_LIST_KEY: &str = "ResList";
+    pub const POOL_EMIS_KEY: &str = "PoolEmis";
 
     #[derive(Clone)]
     #[contracttype]
@@ -161,7 +170,6 @@ pub mod storage {
         pub max_positions: u32, // the maximum number of effective positions (collateral + liabilities) a single user can hold
     }
 
-    const POOL_CONFIG_KEY: &str = "Config";
     pub fn get_res_config(pool: [u8; 32], asset: &Address) -> ReserveConfig {
         let key = PoolDataKey::ResConfig(asset.clone());
         EnvClient::empty()
@@ -208,16 +216,17 @@ pub mod storage {
             .unwrap()
             .unwrap()
     }
-
-    const RES_LIST_KEY: &str = "ResList";
 }
 
 pub mod inner {
+    use crate::EnvClient;
     use soroban_fixed_point_math::FixedPoint;
     use soroban_sdk::{contracttype, map, vec, Address, Env, Map, Vec};
-    use crate::EnvClient;
 
-    use super::{storage::{self, PoolConfig, PositionData, Positions, Reserve}, SCALAR_7, SCALAR_9};
+    use super::{
+        storage::{self, PoolConfig, PositionData, Positions, Reserve},
+        SCALAR_7, SCALAR_9,
+    };
 
     fn i128(n: u32) -> i128 {
         n as i128
@@ -364,18 +373,24 @@ pub mod inner {
                     continue;
                 }
 
-                let reserve = pool.load_reserve(pool_hash, e, &reserve_list.get_unchecked(i), false);
+                let reserve =
+                    pool.load_reserve(pool_hash, e, &reserve_list.get_unchecked(i), false);
 
-                let asset_base =
-                    crate::protocols::reflector::reflector_price(&env, pool.config.oracle.clone(), reserve.asset) as f64;
+                let asset_base = crate::protocols::reflector::reflector_price(
+                    &env,
+                    pool.config.oracle.clone(),
+                    reserve.asset,
+                ) as f64;
 
                 let as_asset_b = (b_token_balance as f64 * reserve.b_rate as f64) / SCALAR_9 as f64;
-                let as_effective_b = (as_asset_b as f64 * reserve.c_factor as f64) / SCALAR_7 as f64;
+                let as_effective_b =
+                    (as_asset_b as f64 * reserve.c_factor as f64) / SCALAR_7 as f64;
 
                 collateral_base += (asset_base * as_effective_b) / oracle_scalar;
 
                 let as_asset_d = (d_token_balance as f64 * reserve.d_rate as f64) / SCALAR_9 as f64;
-                let as_effective_d = (as_asset_d as f64 / reserve.l_factor as f64) / SCALAR_7 as f64;
+                let as_effective_d =
+                    (as_asset_d as f64 / reserve.l_factor as f64) / SCALAR_7 as f64;
 
                 liability_base += (asset_base * as_effective_d) / oracle_scalar;
             }
@@ -411,7 +426,15 @@ impl BlendPoolWrapper {
             Pool::load(&env.soroban(), pool_hash)
         } else {
             Pool {
-                config: PoolConfig { oracle: address_from_str(env, "CCEVW3EEW4GRUZTZRTAMJAXD6XIF5IG7YQJMEEMKMVVGFPESTRXY2ZAV"), bstop_rate: 2, status: 2, max_positions: 4 },
+                config: PoolConfig {
+                    oracle: address_from_str(
+                        env,
+                        "CCEVW3EEW4GRUZTZRTAMJAXD6XIF5IG7YQJMEEMKMVVGFPESTRXY2ZAV",
+                    ),
+                    bstop_rate: 2,
+                    status: 2,
+                    max_positions: 4,
+                },
                 reserves: map![env.soroban()],
                 reserves_to_store: vec![env.soroban()],
                 price_decimals: None,
@@ -419,18 +442,24 @@ impl BlendPoolWrapper {
             }
         };
 
-        Self { str_addr: pool, pool: pool_obj, mocked }
+        Self {
+            str_addr: pool,
+            pool: pool_obj,
+            mocked,
+        }
     }
 
     /// Get a user's health factor.
-    pub fn get_user_hf(&mut self, env: &EnvClient, user: &str) -> BlendHfResponse {
+    pub fn get_user_hf(&mut self, env: &EnvClient, user: &str) -> HfResponse {
         if !self.mocked {
-            let pool_hash = stellar_strkey::Contract::from_string(&self.str_addr).unwrap().0;
+            let pool_hash = stellar_strkey::Contract::from_string(&self.str_addr)
+                .unwrap()
+                .0;
             let user_positions = env.read_contract_entry_by_key::<PoolDataKey, Positions>(
                 pool_hash,
                 PoolDataKey::Positions(address_from_str(&env, &user)),
             );
-            
+
             let positions_data = PositionData::calculate_from_positions(
                 pool_hash,
                 &env.soroban(),
@@ -439,28 +468,35 @@ impl BlendPoolWrapper {
             );
             let min = (SCALAR_7 as f64 * 1_0000100.0) / SCALAR_7 as f64;
             let current = positions_data.as_health_factor();
-        
-            BlendHfResponse {
+
+            HfResponse {
                 min: min as i64,
                 current: (current) as i64,
             }
         } else {
-            BlendHfResponse {
+            HfResponse {
                 current: 10070000,
-                min: 10000100
+                min: 10000100,
             }
         }
     }
 
     /// Get pool as hash.
     pub fn as_hash(&self) -> [u8; 32] {
-        stellar_strkey::Contract::from_string(&self.str_addr).unwrap().0
+        stellar_strkey::Contract::from_string(&self.str_addr)
+            .unwrap()
+            .0
     }
 
     /// Get price of an asset in the pool
     pub fn get_price(&self, env: &EnvClient, asset: &str) -> f64 {
         if !self.mocked {
-            crate::protocols::reflector::reflector_price(env, self.get_config().oracle, address_from_str(env, asset)) as f64 / SCALAR_7 as f64
+            crate::protocols::reflector::reflector_price(
+                env,
+                self.get_config().oracle,
+                address_from_str(env, asset),
+            ) as f64
+                / SCALAR_7 as f64
         } else {
             1.0
         }
@@ -471,4 +507,3 @@ impl BlendPoolWrapper {
         self.pool.config.clone()
     }
 }
-

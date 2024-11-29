@@ -1,9 +1,21 @@
 //! Utilities for working with common data patterns.
-//! 
-use ed25519_dalek::{ed25519::signature::{Keypair, SignerMut}, SigningKey, VerifyingKey};
-use sha2::{Sha256, Digest};
-use soroban_sdk::{xdr::{self, DecoratedSignature, Hash, HashIdPreimage, HashIdPreimageSorobanAuthorization, Int128Parts, LedgerFootprint, LedgerKey, Limits, ScMapEntry, ScString, ScSymbol, ScVal, ScVec, Signature, SignatureHint, SorobanAuthorizedInvocation, Transaction, TransactionEnvelope, TransactionSignaturePayload, TransactionSignaturePayloadTaggedTransaction, TransactionV1Envelope, VecM, WriteXdr}, Address};
+//!
 use crate::{EnvClient, SdkError};
+use ed25519_dalek::{
+    ed25519::signature::{Keypair, SignerMut},
+    SigningKey, VerifyingKey,
+};
+use sha2::{Digest, Sha256};
+use soroban_sdk::{
+    xdr::{
+        self, DecoratedSignature, Hash, HashIdPreimage, HashIdPreimageSorobanAuthorization,
+        Int128Parts, LedgerFootprint, LedgerKey, Limits, ScMapEntry, ScString, ScSymbol, ScVal,
+        ScVec, Signature, SignatureHint, SorobanAuthorizedInvocation, Transaction,
+        TransactionEnvelope, TransactionSignaturePayload,
+        TransactionSignaturePayloadTaggedTransaction, TransactionV1Envelope, VecM, WriteXdr,
+    },
+    Address,
+};
 
 /// Returns an allocated String object starting from a Soroban SDK Address object.
 pub fn address_to_alloc_string(env: &EnvClient, address: soroban_sdk::Address) -> String {
@@ -12,10 +24,7 @@ pub fn address_to_alloc_string(env: &EnvClient, address: soroban_sdk::Address) -
 
 /// Builds an address from a slice.
 pub fn address_from_str(env: &EnvClient, address: &str) -> Address {
-    Address::from_string(&soroban_sdk::String::from_str(
-        env.soroban(),
-        address,
-    ))
+    Address::from_string(&soroban_sdk::String::from_str(env.soroban(), address))
 }
 
 /// Returns an allocated String object starting from a Soroban SDK String object.
@@ -45,9 +54,8 @@ pub fn parts_to_i128(parts: &Int128Parts) -> i128 {
 /// Converts a vector into an array.
 /// Panics if the provided array size != vector's length.
 pub fn to_array<T, const N: usize>(v: Vec<T>) -> [T; N] {
-    v.try_into().unwrap_or_else(|v: Vec<T>| {
-        panic!("Expected a Vec of length {} but it was {}", N, v.len())
-    })
+    v.try_into()
+        .unwrap_or_else(|v: Vec<T>| panic!("Expected a Vec of length {} but it was {}", N, v.len()))
 }
 
 #[allow(missing_docs)]
@@ -65,7 +73,9 @@ pub fn to_datakey_symbol(variant_str: &str) -> ScVal {
 #[allow(missing_docs)]
 pub fn to_scval_symbol(from: &str) -> Result<ScVal, SdkError> {
     Ok(ScVal::Symbol(ScSymbol(
-        from.try_into().map_err(|_| SdkError::Conversion)?,
+        from.to_string()
+            .try_into()
+            .map_err(|_| SdkError::Conversion)?,
     )))
 }
 
@@ -75,7 +85,10 @@ pub fn sha256(payload: &[u8]) -> [u8; 32] {
 }
 
 /// Hash a stellar transaction.
-pub fn hash_transaction(tx: &Transaction, network_passphrase: &str) -> Result<[u8; 32], xdr::Error> {
+pub fn hash_transaction(
+    tx: &Transaction,
+    network_passphrase: &str,
+) -> Result<[u8; 32], xdr::Error> {
     let signature_payload = TransactionSignaturePayload {
         network_id: Hash(Sha256::digest(network_passphrase).into()),
         tagged_transaction: TransactionSignaturePayloadTaggedTransaction::Tx(tx.clone()),
@@ -91,7 +104,10 @@ pub fn ed25519_sign(secret_key: &str, payload: &[u8]) -> (VerifyingKey, [u8; 64]
             .0,
     );
 
-    (signing.verifying_key(), signing.sign(payload).to_bytes().try_into().unwrap())
+    (
+        signing.verifying_key(),
+        signing.sign(payload).to_bytes().try_into().unwrap(),
+    )
 }
 
 /// Sign a stellar transaction.
@@ -113,7 +129,11 @@ pub fn sign_transaction(tx: Transaction, network_passphrase: &str, secret_key: &
 }
 
 /// Builds an [`HashIdPreimage::SorobanAuthorization`] from the given nonce, signature, and invocation.
-pub fn build_authorization_preimage(nonce: i64, signature_expiration_ledger: u32, invocation: SorobanAuthorizedInvocation) -> HashIdPreimage {
+pub fn build_authorization_preimage(
+    nonce: i64,
+    signature_expiration_ledger: u32,
+    invocation: SorobanAuthorizedInvocation,
+) -> HashIdPreimage {
     HashIdPreimage::SorobanAuthorization(HashIdPreimageSorobanAuthorization {
         network_id: xdr::Hash(Sha256::digest("Test SDF Network ; September 2015").into()),
         nonce,
@@ -138,13 +158,28 @@ pub fn footprint_read_write_push(footprint: &mut LedgerFootprint, key: LedgerKey
 
 /// Helper to add both contract code and instance to the footprint.
 /// Useful especially for smart accounts.
-pub fn add_contract_to_footprint(footprint: &mut LedgerFootprint, contract_id: &str, wasm_hash: &[u8]) {
-    footprint_read_push(footprint, LedgerKey::ContractData(xdr::LedgerKeyContractData { 
-        contract: xdr::ScAddress::Contract(xdr::Hash(stellar_strkey::Contract::from_string(contract_id).unwrap().0)), 
-        key: xdr::ScVal::LedgerKeyContractInstance, 
-        durability: xdr::ContractDataDurability::Persistent }));
-    
-    footprint_read_push(footprint, xdr::LedgerKey::ContractCode(xdr::LedgerKeyContractCode {
-        hash: xdr::Hash(to_array(wasm_hash.to_vec()))
-    }));
+pub fn add_contract_to_footprint(
+    footprint: &mut LedgerFootprint,
+    contract_id: &str,
+    wasm_hash: &[u8],
+) {
+    footprint_read_push(
+        footprint,
+        LedgerKey::ContractData(xdr::LedgerKeyContractData {
+            contract: xdr::ScAddress::Contract(xdr::Hash(
+                stellar_strkey::Contract::from_string(contract_id)
+                    .unwrap()
+                    .0,
+            )),
+            key: xdr::ScVal::LedgerKeyContractInstance,
+            durability: xdr::ContractDataDurability::Persistent,
+        }),
+    );
+
+    footprint_read_push(
+        footprint,
+        xdr::LedgerKey::ContractCode(xdr::LedgerKeyContractCode {
+            hash: xdr::Hash(to_array(wasm_hash.to_vec())),
+        }),
+    );
 }

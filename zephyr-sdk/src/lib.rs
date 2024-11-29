@@ -13,7 +13,7 @@
 //! struct TestTable {
 //!     hello: ScVal,
 //! }
-//! 
+//!
 //! #[no_mangle]
 //! pub extern "C" fn on_close() {
 //!     let env = EnvClient::new();
@@ -37,12 +37,11 @@
 //!     table.put(&env);
 //!     env.log().debug("Successfully wrote to the database", None);
 //! }
-//! 
+//!
 //! ```
 //!
 
 #![warn(missing_docs)]
-
 
 /// Charting utilities and wrappers.
 pub mod charting;
@@ -57,7 +56,7 @@ pub mod utils;
 
 pub mod prelude;
 
-#[cfg(feature="protocols")]
+#[cfg(feature = "protocols")]
 pub mod protocols;
 
 use rs_zephyr_common::ZephyrStatus;
@@ -71,19 +70,19 @@ use soroban_sdk::xdr::ScVal;
 use stellar_xdr::next::WriteXdr;
 use thiserror::Error;
 
-pub use database::{DatabaseInteract, TableRow, TableRows};
-pub use env::EnvClient;
-pub use ledger_meta::{MetaReader, PrettyMetaReader, PrettyContractEvent};
-pub use logger::EnvLogger;
-pub use ledger_meta::EntryChanges;
-pub use soroban_sdk;
 pub use bincode;
 pub use database::Condition;
+pub use database::{DatabaseInteract, TableRow, TableRows};
+pub use env::{EnvClient, TransactionResponse};
+pub use ledger_meta::EntryChanges;
+pub use ledger_meta::{MetaReader, PrettyContractEvent, PrettyMetaReader};
+pub use logger::EnvLogger;
 pub use macros::DatabaseInteract as DatabaseDerive;
 pub use rs_zephyr_common::{
     http::{AgnosticRequest, Method},
     ZephyrVal,
 };
+pub use soroban_sdk;
 
 fn to_fixed<T, const N: usize>(v: Vec<T>) -> [T; N] {
     v.try_into()

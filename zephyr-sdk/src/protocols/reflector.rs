@@ -1,6 +1,6 @@
-use std::str::FromStr;
-use soroban_sdk::{contracttype, Address, Symbol, TryIntoVal};
 use crate::{utils::address_to_alloc_string, EnvClient};
+use soroban_sdk::{contracttype, Address, Symbol, TryIntoVal};
+use std::str::FromStr;
 
 #[contracttype]
 pub enum Asset {
@@ -10,8 +10,8 @@ pub enum Asset {
 
 #[contracttype]
 pub struct PriceData {
-    price: i128,
-    timestamp: u64,
+    pub price: i128,
+    pub timestamp: u64,
 }
 
 /// Get the last price of an asset listed on reflector.
