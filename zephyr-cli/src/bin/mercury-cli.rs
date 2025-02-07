@@ -53,10 +53,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             target,
             old_api,
             force,
+            project_name
         }) => {
             if let Some(true) = old_api {
                 println!("Deploying wasm ...");
-                client.deploy(target.unwrap(), None, None).await.unwrap();
+                client.deploy(target.unwrap(), project_name, None).await.unwrap();
                 println!("Successfully deployed Zephyr program.");
             } else {
                 println!("Parsing project configuration ...");
