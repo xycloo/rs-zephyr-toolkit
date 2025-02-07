@@ -38,6 +38,9 @@ pub enum Commands {
         target: Option<String>,
 
         #[arg(short, long)]
+        project_name: Option<String>,
+
+        #[arg(short, long)]
         old_api: Option<bool>,
 
         #[arg(short, long)]
