@@ -1,3 +1,11 @@
+//! Legacy Zephyr CLI.
+//!
+//! NB: the server-side commands here (`deploy`, `catchup`, and the `new-project`
+//! table/index/dashboard steps) target Zephyr backend endpoints that have been removed, so
+//! they no longer work against current Mercury. The crate's SDK is still used to write
+//! retroshade/zephyr programs; to deploy retroshades, use the Mercury REST `/retroshade/*`
+//! endpoints.
+
 use std::{
     fs::{File, OpenOptions},
     io::Write,
@@ -10,6 +18,8 @@ const BACKEND_ENDPOINT: &str = "https://api.mercurydata.app";
 const MAINNET_BACKEND_ENDPOINT: &str = "https://mainnet.mercurydata.app";
 const LOCAL_BACKEND: &str = "http://127.0.0.1:8443";
 
+// NB: `Commands::Catchup` is deprecated; allow the match arm below without warnings.
+#[allow(deprecated)]
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
@@ -94,6 +104,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             start,
             project_name,
         }) => {
+            eprintln!("[!] `catchup` is DEPRECATED: self-serve backfills are no longer supported. Backfills now run on-request, contact the Mercury team with your program and ledger range. See https://docs.mercurydata.app/retroshades/get-started/deploying-to-mercury-retroshades#backfills");
             if Some(true) == retroshades {
                 let result = client
                     .retroshades_catchup(functions, start, project_name)
@@ -105,7 +116,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     )
                 }
             } else {
-                println!("[+] You're performing a data catchup, make sure you are subscribed to the contracts you're running the catchup with. Check out https://docs.mercurydata.app/zephyr-full-customization/learn/get-started-set-up-and-manage-the-project/data-catchups-backfill for more info.\n");
+                println!("[+] You're performing a data catchup, make sure you are subscribed to the contracts you're running the catchup with. Check out https://docs.mercurydata.app/retroshades/get-started/deploying-to-mercury-retroshades#backfills for more info.\n");
 
                 let result = if let Some(start) = start {
                     client

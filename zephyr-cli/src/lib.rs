@@ -60,6 +60,14 @@ pub enum Commands {
 
     Build,
 
+    /// DEPRECATED: this command targets Zephyr backend endpoints that have been removed, so it
+    /// no longer works against current Mercury. Self-serve catchup/backfill is unsupported;
+    /// backfills now run on-request via the Mercury team (contact them with the program +
+    /// ledger range). NB: the plain (non-retroshades) path also calls the removed `/graphql`
+    /// route.
+    #[deprecated(
+        note = "targets removed Zephyr endpoints and no longer works; self-serve catchup is unsupported, backfills run on-request via the Mercury team"
+    )]
     Catchup {
         #[arg(short, long)]
         retroshades: Option<bool>,
@@ -373,6 +381,8 @@ impl MercuryClient {
             _ => vec![], // should be unreachable anyways
         };
 
+        // NB: /graphql was removed from the backend, so this subscribe step no longer works.
+        // it only runs as part of the deprecated `catchup` command.
         let graphql_url = format!("{}/graphql", &self.base_url);
         let authorization = self.get_auth();
         let query = r#"
